@@ -64,18 +64,36 @@
 
   /* Mobile / Quick Dash Button */
   #dashHudBtn {
-    position: fixed; right: 20px; bottom: 22px; z-index: 6;
-    width: 68px; height: 68px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, rgba(120, 225, 255, .9), rgba(75, 110, 255, .85));
-    border: 2px solid rgba(255, 255, 255, .65); color: #091326;
-    font: inherit; font-size: 13px; font-weight: 800; letter-spacing: .03em;
-    box-shadow: 0 0 26px rgba(92, 225, 255, .55); cursor: pointer;
+    position: fixed;
+    right: max(18px, env(safe-area-inset-right, 18px));
+    bottom: max(22px, env(safe-area-inset-bottom, 22px));
+    z-index: 6;
+    width: 74px; height: 74px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(120, 225, 255, .94), rgba(75, 110, 255, .88));
+    border: 2.5px solid rgba(255, 255, 255, .72); color: #091326;
+    font: inherit; font-size: 13.5px; font-weight: 800; letter-spacing: .03em;
+    box-shadow: 0 0 28px rgba(92, 225, 255, .58); cursor: pointer;
     display: none; flex-direction: column; align-items: center; justify-content: center;
-    pointer-events: auto; transition: transform .1s, opacity .15s;
+    pointer-events: auto; touch-action: manipulation; transition: transform .1s, opacity .15s;
   }
-  #dashHudBtn:active { transform: scale(.92); }
+  #dashHudBtn:active { transform: scale(.91); }
   #dashHudBtn.cd { opacity: .45; background: rgba(30, 24, 66, .8); color: #a79fd0; border-color: rgba(255,255,255,.2); box-shadow: none; }
-  #dashHudBtn small { font-size: 10px; opacity: .8; font-weight: 700; }
+  #dashHudBtn small { font-size: 10px; opacity: .82; font-weight: 700; }
+
+  @media (max-width: 640px), (pointer: coarse) {
+    #hud {
+      top: max(8px, env(safe-area-inset-top, 8px));
+      left: max(8px, env(safe-area-inset-left, 8px));
+      right: max(8px, env(safe-area-inset-right, 8px));
+      gap: 5px;
+    }
+    .pill { padding: 6px 10px; font-size: 12.5px; }
+    #pauseBtn { padding: 7px 13px; font-size: 13px; }
+    #dashHudBtn { width: 80px; height: 80px; font-size: 14px; }
+    #tutBanner { top: 52px; padding: 8px 12px; }
+    .panel { padding: 16px 15px; max-height: calc(100vh - 82px); }
+    h1 { font-size: 31px; } h2 { font-size: 24px; }
+  }
 
   /* Overlays & Panels */
   .overlay {
@@ -1180,7 +1198,6 @@ cv.addEventListener("touchstart", e => {
 }, { passive: true });
 cv.addEventListener("touchmove", setTarget, { passive: true });
 $("dashHudBtn").onclick = (e) => { e.stopPropagation(); triggerDash(); };
-
 /* ============================================================================
    6. Run Lifecycle & Monetization Flows
    ============================================================================ */
