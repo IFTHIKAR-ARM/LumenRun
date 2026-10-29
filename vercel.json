@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/lumenrun-v5.html" }
+  ]
+}
+
