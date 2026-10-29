@@ -1,0 +1,2721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>LumenRun — Relaxing Light &amp; Arcade Survival Game</title>
+<meta name="description" content="Drift through a glowing sanctuary of starlight. Collect musical light shards, unleash Nova shockwaves, and outshine the shadows in Zen Chill or Classic mode." />
+<meta name="keywords" content="LumenRun, relaxing game, casual game, arcade survival, avoid game, zen game, light orb, skill game, CrazyGames" />
+<meta property="og:title" content="LumenRun — Relaxing Light &amp; Arcade Survival" />
+<meta property="og:description" content="Breathe, drift, and keep the light alive. A serene musical arcade survival game." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="LumenRun.jpeg" />
+<link rel="preload" as="image" href="LumenRun.jpeg" />
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "LumenRun",
+  "image": "LumenRun.jpeg",
+  "genre": ["Casual", "Arcade", "Relaxing", "Avoid", "Skill", "Survival"],
+  "gamePlatform": ["Web Browser", "Desktop", "Mobile"],
+  "applicationCategory": "Game",
+  "operatingSystem": "Any"
+}
+</script>
+<!-- CrazyGames SDK v3 -->
+<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+<style>
+  :root {
+    --gold: #ffd978;
+    --violet: #8b6bff;
+    --cyan: #5ce1ff;
+    --emerald: #4df0a8;
+    --crimson: #ff5c7c;
+    --ink: #08061a;
+    --glass: rgba(20, 15, 48, .82);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; width: 100%; height: 100%; background: var(--ink); overflow: hidden; color: #f6eccb;
+    font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    touch-action: none; user-select: none; -webkit-user-select: none;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  /* HUD */
+  #hud {
+    position: fixed; top: 12px; left: 12px; right: 12px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    pointer-events: none; z-index: 5;
+  }
+  .pill {
+    padding: 7px 13px; border-radius: 999px; background: var(--glass);
+    border: 1px solid rgba(255, 217, 120, .25); backdrop-filter: blur(6px);
+    font-size: 14px; font-weight: 700; box-shadow: 0 0 16px rgba(139, 107, 255, .22);
+    white-space: nowrap; display: flex; align-items: center; gap: 6px;
+  }
+  .pill.combo-pill { border-color: var(--cyan); color: var(--cyan); box-shadow: 0 0 18px rgba(92, 225, 255, .35); }
+  .pill.boost-pill { border-color: var(--emerald); color: #b8ffe0; box-shadow: 0 0 18px rgba(77, 240, 168, .35); }
+  #meter { flex: 1; min-width: 85px; max-width: 190px; height: 12px; padding: 0; border-radius: 999px; overflow: hidden; }
+  #meterFill { height: 100%; width: 100%; background: linear-gradient(90deg, #ff9d4d, var(--gold)); box-shadow: 0 0 12px var(--gold); transition: width .12s; }
+  #best { margin-left: auto; }
+  #pauseBtn { pointer-events: auto; cursor: pointer; color: inherit; font: inherit; font-size: 14px; font-weight: 700; }
+
+  /* Mobile / Quick Dash Button */
+  #dashHudBtn {
+    position: fixed; right: 20px; bottom: 22px; z-index: 6;
+    width: 68px; height: 68px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(120, 225, 255, .9), rgba(75, 110, 255, .85));
+    border: 2px solid rgba(255, 255, 255, .65); color: #091326;
+    font: inherit; font-size: 13px; font-weight: 800; letter-spacing: .03em;
+    box-shadow: 0 0 26px rgba(92, 225, 255, .55); cursor: pointer;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    pointer-events: auto; transition: transform .1s, opacity .15s;
+  }
+  #dashHudBtn:active { transform: scale(.92); }
+  #dashHudBtn.cd { opacity: .45; background: rgba(30, 24, 66, .8); color: #a79fd0; border-color: rgba(255,255,255,.2); box-shadow: none; }
+  #dashHudBtn small { font-size: 10px; opacity: .8; font-weight: 700; }
+
+  /* Overlays & Panels */
+  .overlay {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 12px; background: radial-gradient(circle at 50% 38%, rgba(42, 26, 100, .58), rgba(5, 4, 16, .93));
+  }
+  .overlay.hidden { display: none !important; }
+  .panel {
+    width: min(440px, 94vw); max-height: calc(100vh - 108px); overflow-y: auto;
+    padding: 22px 22px; text-align: center; background: var(--glass); border-radius: 22px;
+    border: 1px solid rgba(255, 217, 120, .3); backdrop-filter: blur(12px);
+    box-shadow: 0 0 60px rgba(139, 107, 255, .35), inset 0 0 30px rgba(255, 217, 120, .06);
+  }
+  .panel::-webkit-scrollbar { width: 6px; }
+  .panel::-webkit-scrollbar-thumb { background: rgba(255, 217, 120, .28); border-radius: 99px; }
+
+  h1, h2 { margin: 0 0 6px; font-weight: 800; letter-spacing: .04em; color: var(--gold); text-shadow: 0 0 22px rgba(255, 217, 120, .6); }
+  h1 { font-size: 38px; } h2 { font-size: 28px; }
+  p { margin: 5px 0 12px; color: #c4b9ea; line-height: 1.42; font-size: 14px; }
+  .stat { font-size: 18px; color: #fff3c9; margin-bottom: 6px; font-weight: 700; }
+  .substat { font-size: 13px; color: #a79fd0; margin: 0 0 12px; }
+
+  /* Buttons */
+  button.b {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 9px; padding: 12px 14px; font: inherit; font-size: 16px; font-weight: 700;
+    border: 0; border-radius: 13px; cursor: pointer; transition: transform .12s, box-shadow .12s, opacity .12s;
+  }
+  button.b:hover:not([disabled]) { transform: translateY(-2px); }
+  button.b:active:not([disabled]) { transform: translateY(0) scale(.98); }
+  button.b:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  .primary { background: linear-gradient(180deg, #ffe39a, #ffc24d); color: #2a1a48; box-shadow: 0 6px 22px rgba(255, 194, 77, .45); font-size: 18px !important; }
+  .reward { background: linear-gradient(180deg, #9c82ff, #6b4cf0); color: #fff; box-shadow: 0 6px 20px rgba(107, 76, 240, .45); }
+  .reward-gold { background: linear-gradient(180deg, #56f0b0, #1db980); color: #06271c; box-shadow: 0 6px 22px rgba(29, 185, 128, .42); }
+  .daily { background: linear-gradient(180deg, #ffb86b, #ff8a3d); color: #2a1a48; box-shadow: 0 6px 20px rgba(255,138,61,.38); }
+  .ghost { background: transparent; color: #c4b9ea; border: 1px solid rgba(255,255,255,.25) !important; }
+  button.b[disabled] { opacity: .45; cursor: default; box-shadow: none; transform: none; }
+
+  .ad-tag {
+    display: inline-block; padding: 2px 6px; border-radius: 5px; font-size: 10px; font-weight: 800;
+    letter-spacing: .05em; background: rgba(0, 0, 0, .28); color: #fff; text-transform: uppercase;
+  }
+  .reward-gold .ad-tag { background: rgba(6, 39, 28, .22); color: #06271c; }
+
+  /* Cards & Grids */
+  .card {
+    display: flex; align-items: center; gap: 11px; padding: 10px 12px; margin: 4px 0 8px;
+    text-align: left; border-radius: 15px; background: rgba(8,6,28,.58); border: 1px solid rgba(139,107,255,.3);
+  }
+  .avatar {
+    width: 76px; height: 76px; margin: 0 auto 8px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; font-weight: 700; color: #1a1030; background-size: cover; background-position: center;
+    box-shadow: 0 0 26px currentColor, inset 0 0 16px rgba(255,255,255,.35);
+  }
+  .avatar.sm { width: 46px; height: 46px; margin: 0; font-size: 20px; flex: none; }
+  .who { flex: 1; min-width: 0; }
+  .who b { display: block; font-size: 16px; color: #fff3c9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .who span { font-size: 12px; color: var(--gold); }
+  .chips { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: #fff3c9; text-align: right; font-weight: 700; }
+  .chips small { color: #a79fd0; font-weight: 400; font-size: 12px; }
+
+  /* Missions Box in Lobby */
+  .missions-box {
+    margin: 8px 0 6px; padding: 10px 12px; border-radius: 14px;
+    background: rgba(8, 6, 28, .62); border: 1px solid rgba(255, 217, 120, .22); text-align: left;
+  }
+  .missions-hdr { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 800; color: var(--gold); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+  .m-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-top: 1px solid rgba(255,255,255,.06); font-size: 13px; }
+  .m-row:first-of-type { border-top: 0; }
+  .m-info { flex: 1; min-width: 0; }
+  .m-info div { color: #f6eccb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-bar { height: 5px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; margin-top: 3px; }
+  .m-bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--emerald)); }
+  .m-btn {
+    padding: 5px 9px; border-radius: 8px; border: 0; font: inherit; font-size: 12px; font-weight: 800;
+    cursor: pointer; background: var(--gold); color: #2a1a48; white-space: nowrap;
+  }
+  .m-btn.done { background: var(--emerald); color: #06271c; box-shadow: 0 0 12px rgba(77, 240, 168, .5); }
+
+  .row2 { display: flex; gap: 8px; }
+  .row2 .b { flex: 1; width: auto; font-size: 14px; padding: 10px 6px; }
+  .tip { margin: 9px 0 0; font-size: 12px; color: #a79fd0; min-height: 28px; }
+  .userline { margin: 8px 0 0; font-size: 13px; color: #c4b9ea; }
+  button.link { background: none; border: 0; padding: 0 0 0 6px; font: inherit; color: var(--gold); text-decoration: underline; cursor: pointer; }
+
+  /* Shop & Upgrades */
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tab {
+    flex: 1; padding: 8px 4px; font: inherit; font-size: 13px; font-weight: 700;
+    border: 1px solid rgba(255,217,120,.3); border-radius: 11px;
+    background: transparent; color: #c4b9ea; cursor: pointer;
+  }
+  .tab.on { background: rgba(255,217,120,.16); color: var(--gold); border-color: var(--gold); }
+  .shopgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(114px, 1fr)); gap: 9px; margin: 8px 0; }
+  .item { padding: 10px 8px; border-radius: 14px; text-align: center; background: rgba(8,6,28,.58); border: 1px solid rgba(139,107,255,.3); }
+  .item.eq { border-color: var(--gold); box-shadow: 0 0 16px rgba(255,217,120,.25); }
+  .item b { display: block; font-size: 13px; color: #fff3c9; }
+  .swatch { width: 42px; height: 42px; margin: 0 auto 7px; border-radius: 50%; box-shadow: 0 0 14px rgba(255,255,255,.18); }
+  .swatch.sq { border-radius: 11px; }
+  .item button {
+    width: 100%; margin-top: 6px; padding: 6px 4px; font: inherit; font-size: 12px; font-weight: 700;
+    border: 0; border-radius: 9px; cursor: pointer; background: var(--gold); color: #2a1a48;
+  }
+  .item button.alt { background: transparent; color: #c4b9ea; border: 1px solid rgba(255,255,255,.25); }
+  .item button.ad-unlock { background: linear-gradient(180deg, #9c82ff, #6b4cf0); color: #fff; margin-top: 4px; font-size: 11px; padding: 5px 4px; }
+
+  /* Upgrade Cards */
+  .up-list { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; text-align: left; }
+  .up-card {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 14px; background: rgba(8, 6, 28, .62); border: 1px solid rgba(139, 107, 255, .32);
+  }
+  .up-ico {
+    width: 40px; height: 40px; border-radius: 11px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; background: rgba(255, 217, 120, .12); border: 1px solid rgba(255, 217, 120, .3);
+  }
+  .up-body { flex: 1; min-width: 0; }
+  .up-body b { display: block; font-size: 14px; color: #fff3c9; }
+  .up-body small { display: block; font-size: 12px; color: #a79fd0; margin-top: 1px; }
+  .up-pips { display: flex; gap: 4px; margin-top: 5px; }
+  .up-pip { width: 18px; height: 5px; border-radius: 99px; background: rgba(255,255,255,.14); }
+  .up-pip.on { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+  .up-acts { display: flex; flex-direction: column; gap: 4px; flex: none; min-width: 96px; }
+  .up-acts button {
+    padding: 6px 8px; border-radius: 9px; border: 0; font: inherit; font-size: 12px; font-weight: 800;
+    cursor: pointer; background: var(--gold); color: #2a1a48;
+  }
+  .up-acts button.ad-up { background: linear-gradient(180deg, #9c82ff, #6b4cf0); color: #fff; font-size: 11px; padding: 5px 7px; }
+  .up-acts button[disabled] { opacity: .45; cursor: default; }
+
+  /* Profile & Settings */
+  .badge { display: inline-block; margin: 2px 0 6px; padding: 3px 12px; border-radius: 999px; font-size: 12px; background: rgba(255,217,120,.14); border: 1px solid rgba(255,217,120,.35); color: var(--gold); }
+  .rank { margin: 6px 0 4px; font-size: 17px; color: #fff3c9; font-weight: 700; }
+  .bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; margin: 5px 0 4px; }
+  .bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ff9d4d, var(--gold)); box-shadow: 0 0 10px var(--gold); }
+  .next { font-size: 12px; color: #a79fd0; margin: 0 0 10px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+  .cell { padding: 9px 8px; border-radius: 13px; background: rgba(8,6,28,.55); border: 1px solid rgba(139,107,255,.3); }
+  .cell b { display: block; font-size: 18px; color: #fff3c9; }
+  .cell span { font-size: 11px; color: #a79fd0; }
+  .scroll { text-align: left; } .scroll h2 { text-align: center; }
+  .srow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .srow label { font-size: 14px; color: #fff3c9; } .srow small { display: block; color: #a79fd0; font-size: 11px; margin-top: 2px; }
+  .srow input[type=range] { width: 130px; accent-color: #ffd978; }
+  .seg { display: flex; gap: 4px; flex: none; }
+  .seg button { padding: 6px 10px; border-radius: 9px; border: 1px solid rgba(255,217,120,.3); background: transparent; color: #c4b9ea; font: inherit; font-size: 12px; cursor: pointer; }
+  .seg button.on { background: rgba(255,217,120,.18); color: var(--gold); }
+  .err { min-height: 18px; margin: 6px 0 0; color: #ff9a9a; font-size: 13px; text-align: center; }
+  .ok { color: #9fe3b0; }
+
+  /* CrazyGames Responsive Banner Container (Menu & Game Over only) */
+  #cg-banner-wrap {
+    position: fixed; bottom: 4px; left: 50%; transform: translateX(-50%); z-index: 12;
+    display: flex; align-items: center; justify-content: center; pointer-events: auto;
+  }
+  #cg-banner-wrap.hidden { display: none !important; }
+  #cg-banner { width: 320px; height: 50px; }
+  @media (min-width: 768px) and (min-height: 640px) {
+    #cg-banner { width: 728px; height: 90px; }
+  }
+
+  /* Ad Auction Interaction Blocker & Spinner (Required by CrazyGames Ad Guidelines) */
+  #adBlocker {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(6, 4, 18, .82); backdrop-filter: blur(6px);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+    pointer-events: auto; color: var(--gold); font-weight: 700; font-size: 16px;
+  }
+  #adBlocker.active { display: flex; }
+  .spinner {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 4px solid rgba(255, 217, 120, .2); border-top-color: var(--gold);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Toast Notification for Unfilled Ads / Status */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 90;
+    padding: 10px 18px; border-radius: 99px; background: rgba(20, 14, 48, .94);
+    border: 1px solid rgba(255, 217, 120, .45); color: #fff3c9; font-size: 13.5px; font-weight: 700;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .5); pointer-events: none;
+    opacity: 0; transition: opacity .2s;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Interactive In-Game Tutorial Banner */
+  #tutBanner {
+    position: fixed; top: 58px; left: 50%; transform: translateX(-50%); z-index: 6;
+    width: min(440px, 92vw); padding: 10px 16px; border-radius: 16px;
+    background: rgba(16, 12, 42, .88); border: 1.5px solid var(--gold);
+    box-shadow: 0 0 28px rgba(255, 217, 120, .35); backdrop-filter: blur(8px);
+    display: none; align-items: center; gap: 12px; pointer-events: auto;
+  }
+  #tutBanner .t-step {
+    padding: 4px 9px; border-radius: 99px; background: var(--gold); color: #2a1a48;
+    font-size: 11px; font-weight: 800; letter-spacing: .04em; white-space: nowrap;
+  }
+  #tutBanner .t-txt { flex: 1; font-size: 13.5px; color: #fff3c9; font-weight: 700; line-height: 1.35; }
+  #tutBanner .t-skip {
+    background: transparent; border: 1px solid rgba(255,255,255,.25); color: #a79fd0;
+    border-radius: 8px; padding: 4px 8px; font: inherit; font-size: 11px; cursor: pointer;
+  }
+
+  /* Game Intro / How to Play Modal */
+  .title-row { display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; margin-bottom: 4px; }
+  .help-pill {
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    padding: 6px 11px; border-radius: 99px; border: 1px solid rgba(255, 217, 120, .45);
+    background: rgba(255, 217, 120, .14); color: var(--gold); font: inherit; font-size: 12px; font-weight: 800;
+    cursor: pointer; transition: transform .12s, background .12s;
+  }
+  .help-pill:hover { background: rgba(255, 217, 120, .26); transform: translateY(-50%) scale(1.04); }
+  .intro-slides { text-align: left; margin: 10px 0 12px; }
+  .intro-card {
+    display: flex; align-items: flex-start; gap: 12px; padding: 11px 12px; margin-bottom: 8px;
+    border-radius: 14px; background: rgba(8, 6, 28, .65); border: 1px solid rgba(139, 107, 255, .32);
+  }
+  .intro-ico {
+    width: 42px; height: 42px; border-radius: 12px; flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    background: rgba(255, 217, 120, .12); border: 1px solid rgba(255, 217, 120, .3);
+  }
+  .intro-card b { display: block; font-size: 14.5px; color: #fff3c9; margin-bottom: 2px; }
+  .intro-card span { display: block; font-size: 12.5px; color: #c4b9ea; line-height: 1.38; }
+  .kbd {
+    display: inline-block; padding: 1px 6px; border-radius: 5px; font-size: 11px; font-weight: 800;
+    background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .3); color: var(--gold);
+  }
+  .dots { display: flex; justify-content: center; gap: 7px; margin: 8px 0 6px; }
+  .dot { width: 9px; height: 9px; border-radius: 99px; background: rgba(255,255,255,.22); border: 0; padding: 0; cursor: pointer; transition: width .15s, background .15s; }
+  .dot.on { width: 24px; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+
+  /* Serene First-Time & Startup Loading Screen with Hero Artwork */
+  #loader {
+    position: fixed; inset: 0; z-index: 120;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 42%, #1d1348 0%, #0b0722 58%, #04030e 100%);
+    transition: opacity .55s ease, visibility .55s ease;
+    padding: 20px; text-align: center; overflow: hidden;
+  }
+  #loader::before {
+    content: ""; position: absolute; inset: -30px; z-index: -1;
+    background: url("LumenRun.jpeg") center / cover no-repeat;
+    filter: blur(22px) brightness(.38) saturate(1.25);
+    opacity: .85;
+  }
+  #loader.done { opacity: 0; visibility: hidden; pointer-events: none; }
+  .loader-hero {
+    position: relative; width: min(420px, 88vw); aspect-ratio: 16 / 9;
+    border-radius: 18px; overflow: hidden; margin-bottom: 16px;
+    border: 1.5px solid rgba(255, 217, 120, .48);
+    box-shadow: 0 12px 44px rgba(0, 0, 0, .65), 0 0 36px rgba(139, 107, 255, .45);
+    background: radial-gradient(circle at 60% 55%, #2a1860, #09061a);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .loader-hero img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    animation: heroZoom 6s ease-in-out infinite alternate;
+  }
+  @keyframes heroZoom {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.045); }
+  }
+  .loader-orb-wrap {
+    position: absolute; width: 92px; height: 92px;
+    display: flex; align-items: center; justify-content: center; pointer-events: none;
+  }
+  .loader-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 1.5px solid rgba(255, 217, 120, .38);
+    animation: pulseRing 2.6s ease-in-out infinite;
+  }
+  .loader-ring.r2 { inset: -14px; border-color: rgba(92, 225, 255, .32); animation-delay: .8s; }
+  .loader-orb {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff, #ffe39a 55%, #ffb84d 100%);
+    box-shadow: 0 0 32px #ffd978, 0 0 64px rgba(92, 225, 255, .55);
+    animation: breatheOrb 2.2s ease-in-out infinite;
+  }
+  @keyframes pulseRing {
+    0%, 100% { transform: scale(.88); opacity: .35; }
+    50% { transform: scale(1.12); opacity: .85; }
+  }
+  @keyframes breatheOrb {
+    0%, 100% { transform: scale(.94); }
+    50% { transform: scale(1.08); }
+  }
+  .loader-sub { font-size: 13.5px; color: #e2d8ff; letter-spacing: .06em; margin: 2px 0 14px; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+  .loader-bar {
+    width: min(260px, 76vw); height: 8px; border-radius: 99px;
+    background: rgba(12, 8, 32, .75); overflow: hidden;
+    border: 1px solid rgba(255, 217, 120, .35);
+  }
+  .loader-fill {
+    height: 100%; width: 12%; border-radius: 99px;
+    background: linear-gradient(90deg, #8b6bff, #5ce1ff, #ffd978);
+    box-shadow: 0 0 12px var(--gold);
+    transition: width .22s ease;
+  }
+  .loader-status { margin-top: 9px; font-size: 12.5px; color: #cfc5f0; font-weight: 700; text-shadow: 0 2px 6px rgba(0,0,0,.7); }
+
+  /* Lobby Hero Cover Banner */
+  .lobby-hero {
+    position: relative; width: 100%; height: 108px; border-radius: 15px; overflow: hidden;
+    margin-bottom: 10px; border: 1px solid rgba(255, 217, 120, .38);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, .45); background: #120b2e;
+  }
+  .lobby-hero img { width: 100%; height: 100%; object-fit: cover; object-position: center 38%; display: block; }
+  .lobby-hero::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(8,6,26,0) 45%, rgba(8,6,26,.78) 100%);
+    pointer-events: none;
+  }
+  .lobby-hero .help-pill {
+    position: absolute; right: 8px; top: 8px; transform: none; z-index: 2;
+    background: rgba(14, 10, 36, .82); backdrop-filter: blur(6px);
+  }
+  .lobby-hero .help-pill:hover { background: rgba(28, 20, 68, .92); transform: scale(1.04); }
+
+  /* Lobby Mode Selector Pill Bar (Zen Chill / Classic / Intense) */
+  .mode-bar {
+    display: flex; gap: 6px; margin: 6px 0 4px; padding: 4px;
+    border-radius: 13px; background: rgba(8, 6, 28, .62); border: 1px solid rgba(255, 217, 120, .2);
+  }
+  .mode-btn {
+    flex: 1; padding: 7px 6px; border-radius: 9px; border: 0;
+    background: transparent; color: #b9b0e0; font: inherit; font-size: 12px; font-weight: 800;
+    cursor: pointer; transition: background .15s, color .15s, box-shadow .15s;
+  }
+  .mode-btn.on {
+    background: rgba(255, 217, 120, .18); color: var(--gold);
+    box-shadow: 0 0 12px rgba(255, 217, 120, .2); border: 1px solid rgba(255, 217, 120, .4);
+  }
+  @media (prefers-reduced-motion: reduce) { button.b { transition: none; } }
+</style>
+</head>
+<body>
+<!-- Serene Startup Loading Screen with LumenRun.jpeg Cover Art -->
+<div id="loader" role="status" aria-live="polite">
+  <div class="loader-hero">
+    <div class="loader-orb-wrap">
+      <div class="loader-ring"></div>
+      <div class="loader-ring r2"></div>
+      <div class="loader-orb"></div>
+    </div>
+    <img src="LumenRun.jpeg" alt="LumenRun Hero Artwork" onerror="this.style.display='none'" />
+  </div>
+  <h1 style="margin-bottom:2px">LumenRun</h1>
+  <div class="loader-sub">Breathe · Drift · Keep the Light Alive</div>
+  <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
+  <div class="loader-status" id="loaderStatus">Kindling starlight sanctuary...</div>
+</div>
+
+<canvas id="c"></canvas>
+
+<!-- In-Game HUD -->
+<div id="hud">
+  <div class="pill" id="time">0.0s</div>
+  <div class="pill" id="meter" title="Light"><div id="meterFill"></div></div>
+  <div class="pill" id="shards">Shards 0</div>
+  <div class="pill combo-pill" id="comboHud" style="display:none">Combo ×1</div>
+  <div class="pill" id="coins">Coins 0</div>
+  <div class="pill boost-pill" id="boostHud" style="display:none">2× Coins</div>
+  <div class="pill" id="best">Best 0.0s</div>
+  <button class="pill" id="pauseBtn" aria-label="Pause game" style="display:none">Pause</button>
+  <div class="pill" id="fps" style="display:none">60 fps</div>
+</div>
+
+<!-- Interactive Guided Tutorial Banner (Shown during first run / tutorial) -->
+<div id="tutBanner">
+  <span class="t-step" id="tutStep">STEP 1/3</span>
+  <div class="t-txt" id="tutTxt">Follow the golden arrow to collect a glowing Light Shard!</div>
+  <button class="t-skip" id="tutSkipBtn">Got it</button>
+</div>
+
+<!-- On-screen Dash Button (Touch / Click during gameplay) -->
+<button id="dashHudBtn" aria-label="Dash">
+  <span id="dashLbl">DASH</span>
+  <small id="dashSub">SPACE</small>
+</button>
+
+<!-- Main Lobby Overlay (starts hidden until loading screen finishes) -->
+<div id="menu" class="overlay hidden">
+  <div class="panel">
+    <div class="lobby-hero">
+      <img src="LumenRun.jpeg" alt="LumenRun" onerror="this.parentElement.style.display='none'" />
+      <button class="help-pill" id="howBtn" title="How to Play &amp; Guide">❓ Guide</button>
+    </div>
+    <div class="card">
+      <div class="avatar sm" id="lAvatar">?</div>
+      <div class="who"><b id="lName">Player</b><span id="lRank">Rank: Spark</span></div>
+      <div class="chips"><span id="lCoins">0 coins</span><small id="lBest">Best 0.0s</small></div>
+    </div>
+
+    <!-- Quick Relaxing / Pacing Mode Selector -->
+    <div class="mode-bar" id="lobbyModeBar" role="group" aria-label="Game Pacing Mode">
+      <button class="mode-btn" data-diff="chill">🌿 Zen Chill</button>
+      <button class="mode-btn on" data-diff="normal">✨ Classic</button>
+      <button class="mode-btn" data-diff="hard">🔥 Intense</button>
+    </div>
+
+    <!-- Active Missions Tracker -->
+    <div class="missions-box">
+      <div class="missions-hdr">
+        <span>Active Missions</span>
+        <span id="missionSummary">Reward Coins</span>
+      </div>
+      <div id="missionList"></div>
+    </div>
+
+    <button class="b primary" id="startBtn">Play Now</button>
+    <div class="row2">
+      <button class="b reward-gold" id="boostBtn"><span class="ad-tag">Ad</span><span id="boostBtnTxt">2× Coins &amp; Shield</span></button>
+      <button class="b ghost" id="coinBoostBtn">Shield Start · 40 Coins</button>
+    </div>
+    <div class="row2">
+      <button class="b daily" id="dailyBtn">Daily Bonus</button>
+      <button class="b reward" id="freeCoinsLobbyBtn"><span class="ad-tag">Ad</span>+100 Coins</button>
+    </div>
+    <div class="row2">
+      <button class="b reward" id="shopBtn">Upgrades &amp; Shop</button>
+      <button class="b reward" id="profileBtn">Profile</button>
+      <button class="b reward" id="settingsBtn">Settings</button>
+    </div>
+    <p class="tip" id="tip"></p>
+    <p class="userline"><span id="userLine"></span><button class="link" id="authBtn"></button></p>
+  </div>
+</div>
+
+<!-- Game Intro / How-to-Play Overlay -->
+<div id="intro" class="overlay hidden">
+  <div class="panel" style="width:min(460px,95vw)">
+    <span class="badge" id="introTag">Welcome to LumenRun</span>
+    <h2 id="introTitle">Keep the Light Alive</h2>
+    <div class="intro-slides" id="introBody"></div>
+    <div class="dots" id="introDots"></div>
+    <div class="row2">
+      <button class="b ghost" id="introPrevBtn">Back</button>
+      <button class="b primary" id="introNextBtn" style="margin-top:9px">Next →</button>
+    </div>
+    <button class="b reward" id="introPlayTutBtn" style="margin-top:8px">Play Interactive Tutorial</button>
+  </div>
+</div>
+
+<!-- Pause Overlay -->
+<div id="pause" class="overlay hidden">
+  <div class="panel">
+    <h2>Paused</h2>
+    <button class="b primary" id="resumeBtn">Resume</button>
+    <button class="b reward" id="pHowBtn">❓ How to Play</button>
+    <button class="b reward" id="pSettingsBtn">Settings</button>
+    <button class="b ghost" id="quitBtn">Quit to lobby</button>
+  </div>
+</div>
+
+<!-- Settings Overlay -->
+<div id="settings" class="overlay hidden">
+  <div class="panel scroll">
+    <h2>Settings</h2>
+    <div id="setList"></div>
+    <button class="b ghost" id="resetBtn">Reset progress</button>
+    <button class="b primary" id="sDone">Done</button>
+  </div>
+</div>
+
+<!-- Profile Overlay -->
+<div id="profile" class="overlay hidden">
+  <div class="panel">
+    <div class="avatar" id="pAvatar">?</div>
+    <h2 id="pName" style="font-size:24px">Player</h2>
+    <span class="badge" id="pBadge">Cloud Auto-Save</span>
+    <div class="rank" id="pRank">Spark</div>
+    <div class="bar"><i id="pBar" style="width:0%"></i></div>
+    <p class="next" id="pNext"></p>
+    <div class="grid">
+      <div class="cell"><b id="sCoins">0</b><span>Coins</span></div>
+      <div class="cell"><b id="sBest">0.0s</b><span>Best time</span></div>
+      <div class="cell"><b id="sBestShards">0</b><span>Best shards</span></div>
+      <div class="cell"><b id="sBestCombo">×1</b><span>Max combo</span></div>
+      <div class="cell"><b id="sGames">0</b><span>Runs played</span></div>
+      <div class="cell"><b id="sTime">0m</b><span>Total survived</span></div>
+    </div>
+    <button class="b reward" id="pAuth">Log in with CrazyGames</button>
+    <button class="b primary" id="pClose">Close</button>
+  </div>
+</div>
+
+<!-- Upgrades & Cosmetics Shop Overlay -->
+<div id="shop" class="overlay hidden">
+  <div class="panel scroll" style="width:min(500px,95vw)">
+    <h2>Upgrades &amp; Shop</h2>
+    <p class="next" id="shopCoins" style="font-size:17px;color:#fff3c9;text-align:center;font-weight:700"></p>
+    <button class="b reward-gold" id="shopAdCoinsBtn" style="margin:0 0 10px"><span class="ad-tag">Ad</span>Watch Ad for +125 Free Coins</button>
+    <div class="tabs" id="shopTabs"></div>
+    <div id="shopUpgrades" class="up-list" style="display:none"></div>
+    <div id="shopGrid" class="shopgrid" style="display:none"></div>
+    <div class="err ok" id="shopMsg" role="status"></div>
+    <button class="b primary" id="shopDone">Done</button>
+  </div>
+</div>
+
+<!-- Revive / Second Chance Overlay -->
+<div id="revive" class="overlay hidden">
+  <div class="panel">
+    <h2>Second Chance!</h2>
+    <p id="reviveMsg"></p>
+    <button class="b reward-gold" id="reviveBtn"><span class="ad-tag">Ad</span><span id="reviveBtnTxt">Free Revive (Full Light + Shield)</span></button>
+    <button class="b daily" id="coinReviveBtn">Revive with 120 Coins</button>
+    <button class="b ghost" id="noBtn">No thanks</button>
+  </div>
+</div>
+
+<!-- Game Over Overlay -->
+<div id="over" class="overlay hidden">
+  <div class="panel">
+    <h2>The light went out</h2>
+    <p class="stat" id="result"></p>
+    <p class="substat" id="unlockLine"></p>
+    <button class="b reward-gold" id="doubleCoinsBtn"><span class="ad-tag">Ad</span><span id="doubleCoinsTxt">Claim 2× Coins</span></button>
+    <div class="row2">
+      <button class="b reward" id="overShopBtn">Upgrades &amp; Shop</button>
+      <button class="b ghost" id="lobbyBtn">Lobby</button>
+    </div>
+    <button class="b primary" id="againBtn">Play Again</button>
+  </div>
+</div>
+
+<!-- CrazyGames Banner Container -->
+<div id="cg-banner-wrap" class="hidden">
+  <div id="cg-banner"></div>
+</div>
+
+<!-- Ad Request Auction Interaction Blocker & Spinner -->
+<div id="adBlocker" role="alert" aria-live="assertive">
+  <div class="spinner"></div>
+  <div>Loading Ad...</div>
+</div>
+
+<!-- Polite Toast for Unfilled Ads / Status -->
+<div id="toast" role="status"></div>
+
+<script>
+/* ============================================================================
+   1. CrazyGames SDK v3 Wrapper & Monetization Controller
+   ============================================================================ */
+const MIDGAME_COOLDOWN_MS = 65000;
+let toastTimer = 0;
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+const portal = {
+  ready: false,
+  inGameplay: false,
+  adPlaying: false,
+  portalMuted: false,
+  userAccountAvailable: false,
+  lastMidgameAdAt: Date.now(),
+  bannerVisible: false,
+
+  async init() {
+    if (!window.CrazyGames || !window.CrazyGames.SDK) return;
+    try {
+      await window.CrazyGames.SDK.init();
+      this.ready = window.CrazyGames.SDK.environment !== "disabled";
+      if (!this.ready) return;
+
+      try { window.CrazyGames.SDK.game.loadingStart(); } catch (e) {}
+
+      if (window.CrazyGames.SDK.game.settings) {
+        this.portalMuted = !!window.CrazyGames.SDK.game.settings.muteAudio;
+      }
+      if (typeof window.CrazyGames.SDK.game.addSettingsChangeListener === "function") {
+        window.CrazyGames.SDK.game.addSettingsChangeListener((s) => {
+          if (s && typeof s.muteAudio === "boolean") {
+            this.portalMuted = s.muteAudio;
+            syncAudioGain();
+          }
+        });
+      }
+
+      if (window.CrazyGames.SDK.user) {
+        this.userAccountAvailable = !!window.CrazyGames.SDK.user.isUserAccountAvailable;
+        if (typeof window.CrazyGames.SDK.user.addAuthListener === "function") {
+          window.CrazyGames.SDK.user.addAuthListener((cgUser) => {
+            if (cgUser) applyPortalUser(cgUser);
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("CrazyGames SDK init skipped:", e);
+      this.ready = false;
+    }
+  },
+
+  loadingStop() {
+    if (!this.ready) return;
+    try { window.CrazyGames.SDK.game.loadingStop(); } catch (e) {}
+  },
+
+  gameplayStart() {
+    if (this.inGameplay) return;
+    this.inGameplay = true;
+    this.hideBanner();
+    if (this.ready) {
+      try { window.CrazyGames.SDK.game.gameplayStart(); } catch (e) {}
+    }
+  },
+
+  gameplayStop() {
+    if (!this.inGameplay) return;
+    this.inGameplay = false;
+    if (this.ready) {
+      try { window.CrazyGames.SDK.game.gameplayStop(); } catch (e) {}
+    }
+  },
+
+  happytime() {
+    if (!this.ready) return;
+    try { window.CrazyGames.SDK.game.happytime(); } catch (e) {}
+  },
+
+  async getUser() {
+    if (!this.ready || !window.CrazyGames.SDK.user || !this.userAccountAvailable) return null;
+    try { return await window.CrazyGames.SDK.user.getUser(); } catch (e) { return null; }
+  },
+
+  async authPrompt() {
+    if (!this.ready || !window.CrazyGames.SDK.user || !this.userAccountAvailable) return null;
+    try {
+      const res = await window.CrazyGames.SDK.user.showAuthPrompt();
+      return res && res.user ? res.user : res;
+    } catch (e) { return null; }
+  },
+
+  dataGet(key, fallback) {
+    try {
+      if (this.ready && window.CrazyGames.SDK.data) {
+        const v = window.CrazyGames.SDK.data.getItem(key);
+        if (v !== null && v !== undefined) return JSON.parse(v);
+      }
+      const lv = localStorage.getItem(key);
+      return lv ? JSON.parse(lv) : fallback;
+    } catch (e) { return fallback; }
+  },
+
+  dataSet(key, val) {
+    const raw = JSON.stringify(val);
+    try {
+      if (this.ready && window.CrazyGames.SDK.data) {
+        window.CrazyGames.SDK.data.setItem(key, raw);
+      }
+    } catch (e) {}
+    try { localStorage.setItem(key, raw); } catch (e) {}
+  },
+
+  showMidgameAd(onDone) {
+    const now = Date.now();
+    if (!this.ready || this.adPlaying || (now - this.lastMidgameAdAt < MIDGAME_COOLDOWN_MS)) {
+      if (onDone) onDone();
+      return;
+    }
+    this.requestAd("midgame", {
+      onComplete: () => {
+        this.lastMidgameAdAt = Date.now();
+        if (onDone) onDone();
+      },
+      onError: () => { if (onDone) onDone(); },
+    });
+  },
+
+  showRewardedAd({ onReward, onError, onClose }) {
+    if (this.adPlaying) return;
+    if (!this.ready) {
+      if (onReward) onReward();
+      if (onClose) onClose(true);
+      return;
+    }
+    let rewarded = false;
+    this.requestAd("rewarded", {
+      onComplete: () => {
+        rewarded = true;
+        this.lastMidgameAdAt = Date.now();
+        if (onReward) onReward();
+        if (onClose) onClose(true);
+      },
+      onError: (err) => {
+        showToast("No ad available right now — please try again shortly.");
+        if (onError) onError(err);
+        if (onClose) onClose(rewarded);
+      },
+    });
+  },
+
+  requestAd(type, { onComplete, onError }) {
+    if (this.inGameplay) this.gameplayStop();
+    const prevState = state;
+    this.adPlaying = true;
+    state = "ad";
+    const blocker = document.getElementById("adBlocker");
+    if (blocker) blocker.classList.add("active");
+    syncAudioGain();
+
+    const finishAuction = () => {
+      this.adPlaying = false;
+      state = prevState;
+      if (blocker) blocker.classList.remove("active");
+      syncAudioGain();
+    };
+
+    try {
+      window.CrazyGames.SDK.ad.requestAd(type, {
+        adStarted: () => {
+          this.adPlaying = true;
+          syncAudioGain();
+        },
+        adFinished: () => {
+          finishAuction();
+          if (onComplete) onComplete();
+        },
+        adError: (err) => {
+          finishAuction();
+          if (onError) onError(err);
+        },
+      });
+    } catch (e) {
+      finishAuction();
+      if (onError) onError(e);
+    }
+  },
+
+  showBanner() {
+    const wrap = document.getElementById("cg-banner-wrap");
+    if (!this.ready || !window.CrazyGames.SDK.banner || this.inGameplay) {
+      wrap.classList.add("hidden");
+      return;
+    }
+    wrap.classList.remove("hidden");
+    if (this.bannerVisible) return;
+    this.bannerVisible = true;
+    try {
+      window.CrazyGames.SDK.banner.requestResponsiveBanner("cg-banner");
+    } catch (e) {
+      wrap.classList.add("hidden");
+      this.bannerVisible = false;
+    }
+  },
+
+  hideBanner() {
+    const wrap = document.getElementById("cg-banner-wrap");
+    wrap.classList.add("hidden");
+    if (!this.bannerVisible) return;
+    this.bannerVisible = false;
+    if (this.ready && window.CrazyGames.SDK.banner) {
+      try { window.CrazyGames.SDK.banner.clearBanner("cg-banner"); } catch (e) {}
+    }
+  },
+};
+
+/* Prevent unwanted browser scrolling / context menu */
+window.addEventListener("contextmenu", e => e.preventDefault());
+window.addEventListener("keydown", e => {
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Spacebar"].includes(e.key)) {
+    if (document.activeElement && ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) return;
+    e.preventDefault();
+  }
+}, { passive: false });
+window.addEventListener("wheel", e => {
+  if (!e.target.closest(".panel")) e.preventDefault();
+}, { passive: false });
+
+/* ============================================================================
+   2. Settings, Upgrades, Missions & Cosmetics Definitions
+   ============================================================================ */
+const reducedMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+const DEFAULTS = { sound: true, music: true, volume: 0.8, diff: "chill", fx: "normal", shake: !reducedMotion, noflash: reducedMotion, fps: false };
+let settings = Object.assign({}, DEFAULTS);
+function loadSettings() {
+  settings = Object.assign({}, DEFAULTS, portal.dataGet("lr_settings", {}));
+  if (settings.diff === "easy") settings.diff = "chill";
+}
+function saveSettings() { portal.dataSet("lr_settings", settings); }
+const QUAL = { low: 0.35, normal: 1, high: 1.6 };
+const DIFF = {
+  chill:  { sp: 0.72, spawn: 1.42, drain: 0.72, coin: 0.95 },
+  normal: { sp: 0.95, spawn: 1.05, drain: 0.92, coin: 1.0 },
+  hard:   { sp: 1.22, spawn: 0.78, drain: 1.08, coin: 1.35 },
+};
+const D = () => DIFF[settings.diff] || DIFF.chill;
+
+/* Permanent Gameplay Upgrades (Coin Sink + Ad Upgrade Option) */
+const UPGRADES = [
+  { id: "light",  ico: "☀️", name: "Solar Core",       desc: "+18 Max Light radius & slower light drain", base: 60,  mult: 1.65, max: 5 },
+  { id: "speed",  ico: "⚡", name: "Swift Wings",      desc: "+8% Movement speed & faster Dash recharge", base: 70,  mult: 1.65, max: 5 },
+  { id: "magnet", ico: "🧲", name: "Starlight Magnet", desc: "+42px Pull range for shards, coins & orbs", base: 80,  mult: 1.7,  max: 5 },
+  { id: "burst",  ico: "💥", name: "Nova Shockwave",   desc: "+45px Light Burst radius & longer stun",   base: 90,  mult: 1.7,  max: 5 },
+  { id: "greed",  ico: "🪙", name: "Midas Glow",       desc: "+15% Bonus coins from runs & coin pickups", base: 100, mult: 1.75, max: 5 },
+];
+const defaultUpgrades = () => ({ light: 0, speed: 0, magnet: 0, burst: 0, greed: 0 });
+function upLv(id) { return (typeof stats !== "undefined" && stats && stats.up && stats.up[id]) || 0; }
+function upCost(u) { const lv = upLv(u.id); return Math.round(u.base * Math.pow(u.mult, lv)); }
+
+/* Mission Templates */
+const MISSION_POOL = [
+  { type: "shards_run",  target: 12, reward: 65,  txt: "Collect 12 shards in a single run" },
+  { type: "survive_run", target: 35, reward: 75,  txt: "Survive 35 seconds in one run" },
+  { type: "combo_run",   target: 4,  reward: 80,  txt: "Reach a ×4 Shard Combo" },
+  { type: "bursts_total",target: 4,  reward: 70,  txt: "Trigger 4 Light Bursts (every 5 shards)" },
+  { type: "dashes_total",target: 6,  reward: 60,  txt: "Use Phase Dash 6 times" },
+  { type: "coins_pick",  target: 10, reward: 85,  txt: "Pick up 10 Golden Coins in the arena" },
+  { type: "shards_total",target: 30, reward: 95,  txt: "Collect 30 total shards across runs" },
+  { type: "survive_run", target: 60, reward: 120, txt: "Survive 60 seconds in one run" },
+];
+
+const COSMETICS = {
+  orb: [
+    { id: "gold", name: "Sunlight", price: 0, rgb: "255,200,110", hi: "255,226,160", core: "#fffbe6", hex: "#ffd978" },
+    { id: "sky", name: "Sky", price: 80, rgb: "110,190,255", hi: "170,220,255", core: "#f0f8ff", hex: "#8fd0ff" },
+    { id: "mint", name: "Mint", price: 80, rgb: "100,235,170", hi: "170,250,210", core: "#f0fff7", hex: "#7df0b5" },
+    { id: "rose", name: "Rose", price: 120, rgb: "255,130,170", hi: "255,190,210", core: "#fff0f5", hex: "#ff9fc0" },
+    { id: "violet", name: "Violet", price: 150, rgb: "170,130,255", hi: "205,180,255", core: "#f6f0ff", hex: "#b79cff" },
+    { id: "ember", name: "Ember", price: 200, rgb: "255,120,60", hi: "255,170,110", core: "#fff3ea", hex: "#ff8a4a" },
+    { id: "prism", name: "Prism", price: 500, rainbow: true },
+  ],
+  trail: [
+    { id: "gold", name: "Sparkle", price: 0, rgb: "255,217,120" },
+    { id: "firefly", name: "Fireflies", price: 60, rgb: "170,255,120" },
+    { id: "petal", name: "Petals", price: 100, rgb: "255,150,190" },
+    { id: "frost", name: "Frost", price: 100, rgb: "150,230,255" },
+    { id: "embers", name: "Embers", price: 150, rgb: "255,140,70" },
+    { id: "prism", name: "Prism", price: 300, rainbow: true },
+  ],
+  world: [
+    { id: "midnight", name: "Midnight", price: 0, bg: ["#0d0a2a", "#120d33", "#1b0f3a"], fog: ["70,40,150", "30,60,130"], mote: "255,230,160" },
+    { id: "sunset", name: "Sunset", price: 150, bg: ["#2a0f3a", "#6a2060", "#c2584f"], fog: ["200,90,110", "255,140,80"], mote: "255,200,150" },
+    { id: "ocean", name: "Ocean", price: 200, bg: ["#021a2e", "#05365a", "#0a5f7d"], fog: ["20,120,170", "10,80,140"], mote: "170,235,255" },
+    { id: "forest", name: "Forest", price: 200, bg: ["#04140f", "#0a2c1c", "#14452e"], fog: ["30,150,90", "20,100,70"], mote: "190,255,150" },
+    { id: "neon", name: "Neon", price: 300, bg: ["#0a0018", "#1c0036", "#33005a"], fog: ["255,0,200", "0,200,255"], mote: "255,150,255" },
+    { id: "aurora", name: "Aurora", price: 400, bg: ["#020c18", "#06213a", "#0e3a4e"], fog: ["60,220,160", "140,90,255"], mote: "180,255,230" },
+  ],
+};
+const defaultOwned = () => ({ orb: ["gold"], trail: ["gold"], world: ["midnight"] });
+const defaultEq = () => ({ orb: "gold", trail: "gold", world: "midnight" });
+function cos(cat) {
+  const id = (typeof stats !== "undefined" && stats && stats.eq ? stats.eq : {})[cat];
+  return COSMETICS[cat].find(i => i.id === id) || COSMETICS[cat][0];
+}
+function hsl2rgb(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return `${Math.round(255 * f(0))},${Math.round(255 * f(8))},${Math.round(255 * f(4))}`;
+}
+function orbColors(now) {
+  const it = cos("orb");
+  if (!it.rainbow) return it;
+  const h = (now / 12) % 360;
+  return { rgb: hsl2rgb(h, 90, 65), hi: hsl2rgb(h, 90, 78), core: "#ffffff", hex: `hsl(${h},90%,70%)` };
+}
+function trailRGB() { const it = cos("trail"); return it.rainbow ? hsl2rgb((performance.now() / 8) % 360, 90, 65) : it.rgb; }
+
+/* ============================================================================
+   3. WebAudio Synthesizer & Ambient Zen Soundscape (Ad/Focus/Portal-Mute Safe)
+   ============================================================================ */
+let AC = null, master = null, ambGain = null, tabHidden = false, ambStarted = false;
+function audioInit() {
+  if (AC) {
+    if (AC.state === "suspended" && !portal.adPlaying && !tabHidden) {
+      try { AC.resume(); } catch (e) {}
+    }
+    startAmbientPad();
+    return;
+  }
+  try {
+    AC = new (window.AudioContext || window.webkitAudioContext)();
+    master = AC.createGain();
+    master.gain.value = gainNow();
+    master.connect(AC.destination);
+    startAmbientPad();
+  } catch (e) {}
+}
+const gainNow = () => (portal.adPlaying || portal.portalMuted || tabHidden || !settings.sound) ? 0 : settings.volume;
+const ambGainNow = () => (portal.adPlaying || portal.portalMuted || tabHidden || !settings.sound || !settings.music) ? 0 : 0.16;
+
+function startAmbientPad() {
+  if (!AC || ambStarted) return;
+  try {
+    ambStarted = true;
+    ambGain = AC.createGain();
+    ambGain.gain.value = ambGainNow();
+
+    // Warm low-pass filter for a soothing meditative pad
+    const filter = AC.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 440;
+    filter.Q.value = 0.7;
+
+    // Slow breathing LFO on filter cutoff
+    const lfo = AC.createOscillator();
+    const lfoGain = AC.createGain();
+    lfo.type = "sine";
+    lfo.frequency.value = 0.14; // 7-second breathing cycle
+    lfoGain.gain.value = 160;
+    lfo.connect(lfoGain).connect(filter.frequency);
+    lfo.start();
+
+    // Serene C-major9 / A-minor9 harmonic drone notes (Hz)
+    const freqs = [130.81, 196.00, 246.94, 293.66, 329.63];
+    freqs.forEach((f, idx) => {
+      const osc = AC.createOscillator();
+      const vGain = AC.createGain();
+      osc.type = idx % 2 === 0 ? "sine" : "triangle";
+      osc.frequency.value = f;
+      osc.detune.value = (idx - 2) * 3.5;
+      vGain.gain.value = 0.18 / freqs.length;
+      osc.connect(vGain).connect(filter);
+      osc.start();
+    });
+
+    filter.connect(ambGain).connect(master);
+  } catch (e) {}
+}
+
+function syncAudioGain() {
+  if (master) master.gain.value = gainNow();
+  if (ambGain) ambGain.gain.value = ambGainNow();
+  if (AC) {
+    if (portal.adPlaying || tabHidden) { try { AC.suspend(); } catch (e) {} }
+    else if (AC.state === "suspended") { try { AC.resume(); } catch (e) {} }
+  }
+}
+
+// Unlock soothing audio on first user interaction (essential for Direct-to-Gameplay)
+["pointerdown", "keydown", "touchstart"].forEach(ev => {
+  window.addEventListener(ev, () => audioInit(), { once: true, passive: true });
+});
+
+function tone(freq, dur, vol, type = "sine", delay = 0) {
+  if (!AC || gainNow() <= 0) return;
+  const t0 = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.001, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.018);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur);
+}
+const SCALE = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51];
+const chime = n => {
+  const f = SCALE[Math.min(n, SCALE.length - 1)];
+  tone(f, 0.65, 0.11, "sine");
+  tone(f * 1.5, 0.48, 0.035, "sine", 0.04);
+  tone(f * 2, 0.38, 0.025, "triangle", 0.07);
+};
+const coinSound = () => { tone(783.99, 0.22, 0.08, "sine"); tone(1046.50, 0.36, 0.09, "sine", 0.06); };
+const dashSound = () => { tone(392.00, 0.22, 0.07, "sine"); tone(587.33, 0.32, 0.08, "sine", 0.04); };
+const burstSound = () => { [392.00, 493.88, 587.33, 783.99].forEach((f, i) => tone(f, 0.85, 0.09, "sine", i * 0.06)); };
+const loseSound = () => { tone(293.66, 0.65, 0.1, "sine"); tone(220.00, 0.85, 0.1, "sine", 0.16); tone(146.83, 1.1, 0.1, "sine", 0.32); };
+
+/* ============================================================================
+   4. Canvas & Arena State
+   ============================================================================ */
+const cv = document.getElementById("c"), ctx = cv.getContext("2d");
+const $ = id => document.getElementById(id);
+let W, H, DPR, motes = [];
+const rand = (a, b) => a + Math.random() * (b - a);
+function resize() {
+  DPR = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  motes = Array.from({ length: Math.round(W * H / 12000 * (settings.fx === "low" ? 0.4 : 1)) }, () => ({
+    x: Math.random() * W, y: Math.random() * H, r: rand(0.7, 2.4), ph: rand(0, 6.28), sp: rand(3, 11) }));
+}
+addEventListener("resize", resize); resize();
+
+const BASE_MAX_LIGHT = 240, MIN_LIGHT = 62;
+const getMaxLight = () => BASE_MAX_LIGHT + upLv("light") * 18;
+const getLightDrain = () => 8.5 * (D().drain || 1) * Math.pow(0.92, upLv("light"));
+const getMoveSpeed = () => 235 * (1 + upLv("speed") * 0.08);
+const getMagnetRange = () => 34 + upLv("magnet") * 42 + (magnetBuffT > 0 ? 280 : 0);
+const getBurstRadius = () => 400 + upLv("burst") * 45;
+const getGreedMult = () => 1 + upLv("greed") * 0.15;
+
+let state = "menu", p, shadows, shards, coinDrops, powerups, parts, rings, texts;
+let t = 0, collected = 0, runCoinPickups = 0, light = BASE_MAX_LIGHT, spawnT = 1, coinSpawnT = 4, powSpawnT = 11, nextBossT = 40;
+let coins = 0, lastRunCoins = 0, doubled = false, preRunBoost = false, coinShieldBoost = false, runCoinMult = 1;
+let combo = 1, comboT = 0, maxRunCombo = 1;
+let dashCd = 0, dashActiveT = 0, dashVx = 0, dashVy = 0;
+let magnetBuffT = 0, flareBuffT = 0;
+let shake = 0, flash = 0, best = 0, revived = false, invuln = 0, reviveT = 0;
+let tutActive = false, tutPhase = 0; // 0=collect shard, 1=use dash, 2=trigger burst (5 shards), 3=done
+const keys = {}, target = { x: 0, y: 0, active: false };
+
+function reset() {
+  p = { x: W / 2, y: H / 2, r: 11, dirX: 0, dirY: -1 };
+  shadows = []; shards = []; coinDrops = []; powerups = []; parts = []; rings = []; texts = [];
+  t = 0; collected = 0; runCoinPickups = 0;
+  light = getMaxLight();
+  spawnT = 1.0; coinSpawnT = 3.5; powSpawnT = 10; nextBossT = 38;
+  combo = 1; comboT = 0; maxRunCombo = 1;
+  dashCd = 0; dashActiveT = 0; magnetBuffT = 0; flareBuffT = 0;
+  shake = 0; flash = 0; target.active = false; revived = false; invuln = 0;
+  spawnShard(); spawnShard();
+}
+
+function spawnShard() {
+  shards.push({ x: rand(55, W - 55), y: rand(85, H - 55), ph: rand(0, 6.28), a: 0 });
+}
+function spawnCoinDrop(x, y, val = 5) {
+  coinDrops.push({
+    x: x !== undefined ? x : rand(60, W - 60),
+    y: y !== undefined ? y : rand(85, H - 60),
+    val, ph: rand(0, 6.28), life: 14,
+  });
+}
+function spawnPowerup() {
+  const types = [
+    { kind: "shield", label: "SHIELD", rgb: "92,225,255" },
+    { kind: "magnet", label: "MAGNET", rgb: "185,130,255" },
+    { kind: "flare",  label: "SOLAR FLARE", rgb: "255,210,90" },
+  ];
+  const pick = types[Math.floor(Math.random() * types.length)];
+  powerups.push({ x: rand(70, W - 70), y: rand(90, H - 70), kind: pick.kind, label: pick.label, rgb: pick.rgb, ph: rand(0, 6.28), life: 13 });
+}
+function spawnShadow(forceType) {
+  const side = Math.floor(Math.random() * 4), m = 55;
+  const x = side === 0 ? -m : side === 1 ? W + m : rand(0, W);
+  const y = side === 2 ? -m : side === 3 ? H + m : rand(0, H);
+
+  let type = forceType || "stalker";
+  if (!forceType && t > 18 && Math.random() < 0.28) type = "darter";
+
+  if (type === "boss") {
+    shadows.push({ type: "boss", x, y, r: 34, hp: 2, sp: (42 + t * 0.9) * D().sp, ph: rand(0, 9), vx: 0, vy: 0 });
+    texts.push({ x: W / 2, y: 110, life: 1.8, max: 1.8, str: "⚠️ ECLIPSE WARDEN APPROACHING!" });
+  } else if (type === "darter") {
+    shadows.push({ type: "darter", x, y, r: rand(12, 16), sp: (68 + t * 1.8) * D().sp, ph: rand(0, 9), vx: 0, vy: 0, dashT: rand(1.5, 3) });
+  } else {
+    shadows.push({ type: "stalker", x, y, r: rand(15, 24), sp: (45 + t * 1.45) * D().sp, ph: rand(0, 9), vx: 0, vy: 0 });
+  }
+}
+
+function burst(x, y, n, color, spd = 120, life = 0.8) {
+  n = Math.ceil(n * QUAL[settings.fx]);
+  for (let i = 0; i < n; i++) {
+    const a = rand(0, 6.28), s = rand(spd * 0.3, spd);
+    parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life, max: life, size: rand(1.5, 4), color });
+  }
+}
+
+/* ============================================================================
+   5. Input & Active Dash Skill
+   ============================================================================ */
+function triggerDash() {
+  if (state !== "play" || dashCd > 0) return;
+  const cdBase = Math.max(1.8, 3.2 - upLv("speed") * 0.22);
+  dashCd = cdBase;
+  dashActiveT = 0.24;
+  invuln = Math.max(invuln, 0.38);
+
+  let dx = p.dirX, dy = p.dirY;
+  if (target.active) {
+    const tx = target.x - p.x, ty = target.y - p.y, d = Math.hypot(tx, ty);
+    if (d > 4) { dx = tx / d; dy = ty / d; }
+  }
+  const l = Math.hypot(dx, dy) || 1;
+  dashVx = (dx / l) * 660;
+  dashVy = (dy / l) * 660;
+
+  dashSound();
+  burst(p.x, p.y, 18, "92,225,255", 180, 0.55);
+  rings.push({ x: p.x, y: p.y, r: 10, life: 0.35, max: 0.35, color: "92,225,255" });
+  progressMission("dashes_total", 1);
+  if (tutActive && tutPhase === 1) advanceTutorial(2);
+}
+
+addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) target.active = false;
+  if ((e.key === " " || e.key === "Shift") && state === "play") triggerDash();
+});
+addEventListener("keyup", e => { keys[e.key.toLowerCase()] = false; });
+
+let lastTapTime = 0;
+function setTarget(e) {
+  const q = e.touches ? e.touches[0] : e;
+  target.x = q.clientX; target.y = q.clientY; target.active = true;
+}
+cv.addEventListener("mousemove", setTarget);
+cv.addEventListener("touchstart", e => {
+  setTarget(e);
+  const now = performance.now();
+  if (now - lastTapTime < 260 && state === "play") triggerDash();
+  lastTapTime = now;
+}, { passive: true });
+cv.addEventListener("touchmove", setTarget, { passive: true });
+$("dashHudBtn").onclick = (e) => { e.stopPropagation(); triggerDash(); };
+
+/* ============================================================================
+   6. Run Lifecycle & Monetization Flows
+   ============================================================================ */
+function syncTutorialBanner() {
+  const b = $("tutBanner");
+  if (!tutActive || state !== "play") {
+    b.style.display = "none";
+    return;
+  }
+  b.style.display = "flex";
+  if (tutPhase === 0) {
+    $("tutStep").textContent = "STEP 1/3";
+    $("tutTxt").textContent = "Move (Mouse, Touch, or WASD) & follow the golden arrow to collect a Light Shard!";
+  } else if (tutPhase === 1) {
+    $("tutStep").textContent = "STEP 2/3";
+    $("tutTxt").textContent = "Press SPACE / SHIFT (or tap DASH) to phase-dash with brief invulnerability!";
+  } else if (tutPhase === 2) {
+    $("tutStep").textContent = "STEP 3/3";
+    $("tutTxt").textContent = `Collect 5 Shards (${collected}/5) to unleash a Nova Shockwave that blasts shadows!`;
+  }
+}
+
+function advanceTutorial(nextPhase) {
+  tutPhase = nextPhase;
+  if (tutPhase >= 3) {
+    tutActive = false;
+    $("tutBanner").style.display = "none";
+    if (!stats.tutDone) {
+      stats.tutDone = true;
+      coins += 30;
+      saveProfile();
+      texts.push({ x: W / 2, y: 110, life: 1.8, max: 1.8, str: "🎓 TUTORIAL COMPLETE! +30 COINS" });
+      portal.happytime();
+    }
+  } else {
+    syncTutorialBanner();
+  }
+}
+
+$("tutSkipBtn").onclick = (e) => {
+  e.stopPropagation();
+  tutActive = false;
+  stats.tutDone = true;
+  saveProfile();
+  $("tutBanner").style.display = "none";
+};
+
+function startRun(forceTutorial = false) {
+  audioInit();
+  reset();
+  doubled = false;
+  if (forceTutorial || (!stats.tutDone && stats.games === 0)) {
+    tutActive = true;
+    tutPhase = 0;
+  }
+  runCoinMult = preRunBoost ? 2 : 1;
+  if (preRunBoost) {
+    invuln = 5.5;
+    magnetBuffT = 5.5;
+    preRunBoost = false;
+  } else if (coinShieldBoost) {
+    invuln = 4.5;
+    coinShieldBoost = false;
+  }
+  $("boostHud").style.display = runCoinMult > 1 ? "flex" : "none";
+  $("menu").classList.add("hidden");
+  $("over").classList.add("hidden");
+  $("revive").classList.add("hidden");
+  $("intro").classList.add("hidden");
+  state = "play";
+  syncTutorialBanner();
+  portal.gameplayStart();
+}
+
+function endRun() {
+  loseSound();
+  shake = 14;
+  burst(p.x, p.y, 40, "255,217,120", 220, 1.2);
+  portal.gameplayStop();
+  if (revived) return finishRun();
+  state = "revive";
+  reviveT = 8;
+  $("reviveMsg").textContent = `Keep your ${collected} shards & ${t.toFixed(1)}s run! Clear nearby shadows and gain 4s of shield protection.`;
+  const cBtn = $("coinReviveBtn");
+  cBtn.disabled = coins < 120;
+  cBtn.textContent = coins >= 120 ? `Revive with 120 Coins (Have ${coins})` : `Revive · 120 Coins (Need ${120 - coins} more)`;
+  $("revive").classList.remove("hidden");
+  $("reviveBtn").focus();
+}
+
+function doRevive() {
+  revived = true;
+  $("revive").classList.add("hidden");
+  shadows = shadows.filter(s => Math.hypot(s.x - p.x, s.y - p.y) > 360);
+  burst(p.x, p.y, 32, "255,236,170", 210, 1);
+  rings.push({ x: p.x, y: p.y, r: 20, life: 0.9, max: 0.9, color: "255,217,120", big: true });
+  light = getMaxLight();
+  invuln = 4.0;
+  flash = 0.3;
+  burstSound();
+  state = "play";
+  portal.gameplayStart();
+}
+
+function declineRevive() {
+  $("revive").classList.add("hidden");
+  finishRun();
+}
+
+$("noBtn").onclick = declineRevive;
+$("reviveBtn").onclick = () => {
+  if (state !== "revive") return;
+  portal.showRewardedAd({
+    onReward: () => doRevive(),
+    onError: () => {
+      state = "revive";
+      reviveT = 6;
+      $("reviveMsg").textContent = "Ad unavailable right now. Use coins or continue to results.";
+    },
+  });
+};
+$("coinReviveBtn").onclick = () => {
+  if (state !== "revive" || coins < 120) return;
+  coins -= 120;
+  saveProfile();
+  doRevive();
+};
+
+const RANKS = [["Spark", 0], ["Ember", 20], ["Flame", 45], ["Lantern", 80], ["Beacon", 130], ["Sun", 200]];
+function getRankIndex(scoreSec) {
+  let ri = 0;
+  RANKS.forEach((r, i) => { if (scoreSec >= r[1]) ri = i; });
+  return ri;
+}
+
+function finishRun() {
+  state = "over";
+  portal.gameplayStop();
+  $("boostHud").style.display = "none";
+  $("comboHud").style.display = "none";
+  $("tutBanner").style.display = "none";
+
+  progressMission("survive_run", Math.floor(t), true);
+  progressMission("shards_run", collected, true);
+  progressMission("combo_run", maxRunCombo, true);
+
+  const prevRank = getRankIndex(best);
+  const newBest = t > best;
+  if (newBest) best = t;
+  const newRank = getRankIndex(best);
+
+  if (newBest && (t >= 15 || newRank > prevRank)) {
+    portal.happytime();
+  }
+
+  const baseCoins = Math.floor(t) + collected * 5 + runCoinPickups + (maxRunCombo > 1 ? maxRunCombo * 4 : 0);
+  lastRunCoins = Math.max(2, Math.round(baseCoins * D().coin * getGreedMult() * runCoinMult));
+  coins += lastRunCoins;
+
+  stats.games++;
+  stats.totalShards += collected;
+  stats.totalTime += t;
+  stats.bestShards = Math.max(stats.bestShards, collected);
+  stats.bestCombo = Math.max(stats.bestCombo || 1, maxRunCombo);
+  saveProfile();
+
+  updateOverUI(newBest);
+  setTimeout(() => {
+    if (state === "over") {
+      $("over").classList.remove("hidden");
+      portal.showBanner();
+    }
+  }, 580);
+}
+
+function updateOverUI(newBest) {
+  $("result").textContent = `${t.toFixed(1)}s · ${collected} shards · Max ×${maxRunCombo} · +${doubled ? lastRunCoins * 2 : lastRunCoins} coins` + (newBest ? " 🏆 NEW BEST!" : "");
+  $("unlockLine").textContent = unlockHint();
+  const dBtn = $("doubleCoinsBtn");
+  if (doubled || lastRunCoins <= 0) {
+    dBtn.disabled = true;
+    $("doubleCoinsTxt").textContent = `2× Bonus Claimed (+${lastRunCoins} coins)`;
+  } else {
+    dBtn.disabled = false;
+    $("doubleCoinsTxt").textContent = `Claim 2× Coins (+${lastRunCoins} bonus)`;
+  }
+}
+
+$("doubleCoinsBtn").onclick = () => {
+  if (doubled || lastRunCoins <= 0) return;
+  portal.showRewardedAd({
+    onReward: () => {
+      doubled = true;
+      coins += lastRunCoins;
+      saveProfile();
+      audioInit();
+      burstSound();
+      texts.push({ x: W / 2, y: H / 2 - 40, life: 1.2, max: 1.2, str: `+${lastRunCoins} BONUS COINS!` });
+      updateOverUI(false);
+    },
+  });
+};
+
+$("boostBtn").onclick = () => {
+  if (preRunBoost) return;
+  portal.showRewardedAd({
+    onReward: () => {
+      preRunBoost = true;
+      audioInit();
+      burstSound();
+      refreshLobby();
+    },
+  });
+};
+
+$("coinBoostBtn").onclick = () => {
+  if (coinShieldBoost || preRunBoost || coins < 40) return;
+  coins -= 40;
+  coinShieldBoost = true;
+  saveProfile();
+  audioInit();
+  coinSound();
+  refreshLobby();
+};
+
+let lobbyCoinAdCooldown = 0;
+$("freeCoinsLobbyBtn").onclick = () => {
+  if (Date.now() < lobbyCoinAdCooldown) return;
+  portal.showRewardedAd({
+    onReward: () => {
+      coins += 100;
+      lobbyCoinAdCooldown = Date.now() + 12000;
+      saveProfile();
+      audioInit();
+      burstSound();
+      refreshLobby();
+    },
+  });
+};
+
+$("shopAdCoinsBtn").onclick = () => {
+  portal.showRewardedAd({
+    onReward: () => {
+      coins += 125;
+      saveProfile();
+      audioInit();
+      burstSound();
+      refreshLobby();
+      $("shopMsg").className = "err ok";
+      $("shopMsg").textContent = "+125 Coins added!";
+      renderShop();
+    },
+    onError: () => {
+      $("shopMsg").className = "err";
+      $("shopMsg").textContent = "No ad available right now. Please try again shortly.";
+    },
+  });
+};
+
+$("startBtn").onclick = () => startRun(false);
+$("againBtn").onclick = () => {
+  portal.hideBanner();
+  portal.showMidgameAd(() => startRun(false));
+};
+$("overShopBtn").onclick = () => openShop("up");
+
+/* ============================================================================
+   7. Core Gameplay Loop (Movement, Magnet, Combos, Powerups, Bosses)
+   ============================================================================ */
+function update(dt) {
+  t += dt;
+  invuln = Math.max(0, invuln - dt);
+  dashCd = Math.max(0, dashCd - dt);
+  magnetBuffT = Math.max(0, magnetBuffT - dt);
+  flareBuffT = Math.max(0, flareBuffT - dt);
+
+  if (combo > 1) {
+    comboT -= dt;
+    if (comboT <= 0) combo = 1;
+  }
+
+  const maxL = getMaxLight();
+  if (flareBuffT > 0 || (tutActive && tutPhase === 0)) light = maxL;
+  else light = Math.max(MIN_LIGHT, light - dt * getLightDrain());
+
+  const speed = getMoveSpeed();
+  let vx = 0, vy = 0;
+  if (keys["a"] || keys["arrowleft"]) vx--;
+  if (keys["d"] || keys["arrowright"]) vx++;
+  if (keys["w"] || keys["arrowup"]) vy--;
+  if (keys["s"] || keys["arrowdown"]) vy++;
+
+  const ox = p.x, oy = p.y;
+  if (dashActiveT > 0) {
+    dashActiveT -= dt;
+    p.x += dashVx * dt;
+    p.y += dashVy * dt;
+  } else if (vx || vy) {
+    const l = Math.hypot(vx, vy);
+    p.dirX = vx / l; p.dirY = vy / l;
+    p.x += p.dirX * speed * dt;
+    p.y += p.dirY * speed * dt;
+  } else if (target.active) {
+    const dx = target.x - p.x, dy = target.y - p.y, d = Math.hypot(dx, dy);
+    if (d > 4) {
+      p.dirX = dx / d; p.dirY = dy / d;
+      const s = Math.min(speed, d * 8);
+      p.x += p.dirX * s * dt;
+      p.y += p.dirY * s * dt;
+    }
+  }
+  p.x = Math.max(p.r, Math.min(W - p.r, p.x));
+  p.y = Math.max(p.r, Math.min(H - p.r, p.y));
+  const moved = Math.hypot(p.x - ox, p.y - oy) > 0.5;
+  if (moved && Math.random() < 0.9 * QUAL[settings.fx] * Math.min(1, dt * 60)) {
+    parts.push({ x: p.x, y: p.y, vx: rand(-15, 15), vy: rand(-15, 15), life: 0.6, max: 0.6, size: rand(2, 4), color: dashActiveT > 0 ? "92,225,255" : trailRGB() });
+  }
+
+  // Spawners (pause shadow spawns during Tutorial Step 1 so new players can safely learn movement)
+  if (!(tutActive && tutPhase === 0)) {
+    spawnT -= dt;
+    if (spawnT <= 0) {
+      spawnShadow();
+      spawnT = Math.max(0.48, 2.15 - t * 0.028) * D().spawn;
+    }
+    if (t >= nextBossT) {
+      nextBossT += 42;
+      spawnShadow("boss");
+    }
+  }
+  coinSpawnT -= dt;
+  if (coinSpawnT <= 0) {
+    if (coinDrops.length < 4) spawnCoinDrop();
+    coinSpawnT = rand(4.5, 7.5);
+  }
+  powSpawnT -= dt;
+  if (powSpawnT <= 0) {
+    if (powerups.length < 2) spawnPowerup();
+    powSpawnT = rand(12, 18);
+  }
+
+  const magR = getMagnetRange();
+
+  // Shadows update
+  for (let i = shadows.length - 1; i >= 0; i--) {
+    const s = shadows[i];
+    const dx = p.x - s.x, dy = p.y - s.y, d = Math.hypot(dx, dy) || 1;
+    let slowMult = d < light ? 0.52 : 1;
+    if (flareBuffT > 0) slowMult *= 0.35;
+
+    let sp = s.sp * slowMult;
+    if (s.type === "darter") {
+      s.dashT -= dt;
+      if (s.dashT <= 0) { sp *= 2.4; if (s.dashT < -0.35) s.dashT = rand(1.8, 3.2); }
+    }
+    s.vx += (dx / d * sp - s.vx) * Math.min(1, dt * 4);
+    s.vy += (dy / d * sp - s.vy) * Math.min(1, dt * 4);
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+
+    if (d < s.r + p.r - 3) {
+      if (invuln > 0) {
+        // Shield or Dash vaporizes normal shadows and damages bosses!
+        if (s.type === "boss" && s.hp > 1) {
+          s.hp--;
+          s.vx = -dx / d * 480; s.vy = -dy / d * 480;
+          burst(s.x, s.y, 20, "255,180,90", 160, 0.7);
+        } else {
+          burst(s.x, s.y, 24, "139,107,255", 170, 0.8);
+          spawnCoinDrop(s.x, s.y, s.type === "boss" ? 20 : 6);
+          if (s.type === "boss") {
+            portal.happytime();
+            texts.push({ x: s.x, y: s.y - 16, life: 1.2, max: 1.2, str: "WARDEN DEFEATED! +20 COINS" });
+          }
+          shadows.splice(i, 1);
+          coinSound();
+        }
+      } else {
+        return endRun();
+      }
+    }
+  }
+
+  // Shards update + Magnet pull + Combo
+  for (let i = shards.length - 1; i >= 0; i--) {
+    const s = shards[i];
+    s.a = Math.min(1, s.a + dt * 2.5);
+    const dx = p.x - s.x, dy = p.y - s.y, d = Math.hypot(dx, dy) || 1;
+    if (d < magR) {
+      const pull = (1 - d / magR) * 320 + 95;
+      s.x += (dx / d) * pull * dt;
+      s.y += (dy / d) * pull * dt;
+    }
+    if (d < 26) {
+      shards.splice(i, 1);
+      collected++;
+      if (comboT > 0) combo = Math.min(5, combo + 1); else combo = 1;
+      comboT = 4.2;
+      maxRunCombo = Math.max(maxRunCombo, combo);
+
+      light = Math.min(maxL, light + 48 + combo * 5);
+      chime((collected - 1) % 8);
+      burst(s.x, s.y, 18, "255,236,170", 160);
+      rings.push({ x: s.x, y: s.y, r: 8, life: 0.5, max: 0.5, color: "255,217,120" });
+      texts.push({ x: s.x, y: s.y - 10, life: 0.9, max: 0.9, str: combo > 1 ? `+1 (×${combo})` : "+1" });
+
+      progressMission("shards_total", 1);
+      progressMission("shards_run", collected, true);
+      progressMission("combo_run", combo, true);
+
+      if (tutActive) {
+        if (tutPhase === 0) advanceTutorial(1);
+        else if (tutPhase === 2) syncTutorialBanner();
+      }
+
+      spawnShard();
+      if (collected % 4 === 0) spawnShard();
+      if (collected % 5 === 0) lightBurst();
+    }
+  }
+  if (shards.length > 6) shards.shift();
+
+  // Golden Coin Pickups update
+  for (let i = coinDrops.length - 1; i >= 0; i--) {
+    const c = coinDrops[i];
+    c.life -= dt;
+    if (c.life <= 0) { coinDrops.splice(i, 1); continue; }
+    const dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy) || 1;
+    if (d < magR * 1.15) {
+      const pull = (1 - d / (magR * 1.15)) * 340 + 110;
+      c.x += (dx / d) * pull * dt;
+      c.y += (dy / d) * pull * dt;
+    }
+    if (d < 24) {
+      const gain = Math.round(c.val * getGreedMult() * runCoinMult);
+      coins += gain;
+      runCoinPickups += c.val;
+      coinDrops.splice(i, 1);
+      coinSound();
+      burst(c.x, c.y, 14, "255,217,120", 140, 0.65);
+      texts.push({ x: c.x, y: c.y - 10, life: 0.95, max: 0.95, str: `+${gain} 🪙` });
+      progressMission("coins_pick", 1);
+    }
+  }
+
+  // Powerups update
+  for (let i = powerups.length - 1; i >= 0; i--) {
+    const pw = powerups[i];
+    pw.life -= dt;
+    if (pw.life <= 0) { powerups.splice(i, 1); continue; }
+    const dx = p.x - pw.x, dy = p.y - pw.y, d = Math.hypot(dx, dy) || 1;
+    if (d < magR * 0.9) {
+      pw.x += (dx / d) * 200 * dt;
+      pw.y += (dy / d) * 200 * dt;
+    }
+    if (d < 27) {
+      powerups.splice(i, 1);
+      burstSound();
+      burst(pw.x, pw.y, 26, pw.rgb, 190, 0.9);
+      rings.push({ x: pw.x, y: pw.y, r: 14, life: 0.7, max: 0.7, color: pw.rgb });
+      texts.push({ x: pw.x, y: pw.y - 12, life: 1.2, max: 1.2, str: pw.label + "!" });
+      if (pw.kind === "shield") invuln = Math.max(invuln, 5.5);
+      else if (pw.kind === "magnet") magnetBuffT = 6.5;
+      else if (pw.kind === "flare") { flareBuffT = 5.5; light = maxL; }
+    }
+  }
+
+  const pDrag = Math.pow(0.97, dt * 60);
+  for (const q of parts) { q.life -= dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vx *= pDrag; q.vy *= pDrag; }
+  parts = parts.filter(q => q.life > 0);
+  for (const r of rings) { r.life -= dt; }
+  rings = rings.filter(r => r.life > 0);
+  for (const x of texts) { x.life -= dt; x.y -= 28 * dt; }
+  texts = texts.filter(x => x.life > 0);
+  shake = Math.max(0, shake - dt * 30);
+  flash = Math.max(0, flash - dt * 1.8);
+}
+
+function lightBurst() {
+  burstSound();
+  flash = 0.35;
+  shake = 6;
+  light = getMaxLight();
+  if (upLv("burst") >= 2) invuln = Math.max(invuln, 0.6 + upLv("burst") * 0.2);
+  const rad = getBurstRadius();
+  rings.push({ x: p.x, y: p.y, r: 20, life: 0.9, max: 0.9, color: "255,217,120", big: true });
+  for (let i = shadows.length - 1; i >= 0; i--) {
+    const s = shadows[i];
+    const dx = s.x - p.x, dy = s.y - p.y, d = Math.hypot(dx, dy) || 1;
+    if (d < rad) {
+      const push = 520 + upLv("burst") * 50;
+      s.vx += dx / d * push;
+      s.vy += dy / d * push;
+      burst(s.x, s.y, 12, "139,107,255", 120, 0.7);
+      if (s.type === "boss") {
+        s.hp--;
+        if (s.hp <= 0) {
+          spawnCoinDrop(s.x, s.y, 25);
+          shadows.splice(i, 1);
+          portal.happytime();
+          texts.push({ x: s.x, y: s.y - 14, life: 1.3, max: 1.3, str: "WARDEN BLASTED! +25 COINS" });
+        }
+      }
+    }
+  }
+  progressMission("bursts_total", 1);
+  if (tutActive && tutPhase === 2) advanceTutorial(3);
+}
+
+/* ============================================================================
+   8. Rendering
+   ============================================================================ */
+function glow(x, y, r, color, a) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(${color},${a})`);
+  g.addColorStop(1, `rgba(${color},0)`);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+}
+
+function draw(now) {
+  const tt = now / 1000, ORB = orbColors(now), WD = cos("world");
+  ctx.save();
+  if (shake > 0.2 && settings.shake) ctx.translate(rand(-shake, shake), rand(-shake, shake));
+
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, WD.bg[0]); bg.addColorStop(0.6, WD.bg[1]); bg.addColorStop(1, WD.bg[2]);
+  ctx.fillStyle = bg; ctx.fillRect(-20, -20, W + 40, H + 40);
+  ctx.globalCompositeOperation = "lighter";
+  for (let i = 0; i < 4; i++) {
+    glow(W * (0.2 + i * 0.25) + Math.sin(tt * 0.2 + i) * 60, H * (0.3 + 0.4 * ((i * 7) % 3) / 2) + Math.cos(tt * 0.17 + i) * 40,
+         Math.max(W, H) * 0.35, i % 2 ? WD.fog[0] : WD.fog[1], 0.12);
+  }
+  for (const m of motes) {
+    const x = (m.x + Math.sin(tt * 0.4 + m.ph) * 20 + tt * m.sp * 0.3) % W, y = (m.y + Math.cos(tt * 0.3 + m.ph) * 16) % H;
+    ctx.fillStyle = `rgba(${WD.mote},${0.25 + 0.25 * Math.sin(tt * 1.5 + m.ph)})`;
+    ctx.beginPath(); ctx.arc(x, y, m.r, 0, 7); ctx.fill();
+  }
+
+  // Player Light Aura
+  const maxL = getMaxLight();
+  const L = state === "play" || state === "ad" ? light : maxL * 0.5;
+  if (state !== "over" || parts.length) {
+    glow(p.x, p.y, L, flareBuffT > 0 ? "255,230,120" : ORB.rgb, 0.30);
+    glow(p.x, p.y, L * 0.45, ORB.hi, 0.22);
+    ctx.strokeStyle = `rgba(${ORB.rgb},.22)`; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, L * (0.98 + Math.sin(tt * 2) * 0.02), 0, 7); ctx.stroke();
+  }
+
+  // Shards
+  for (const s of shards) {
+    const pulse = 1 + Math.sin(tt * 3 + s.ph) * 0.15, sz = 9 * pulse * s.a;
+    glow(s.x, s.y, 34 * s.a, "255,236,170", 0.5);
+    ctx.save(); ctx.translate(s.x, s.y + Math.sin(tt * 2 + s.ph) * 3); ctx.rotate(tt * 0.8 + s.ph);
+    ctx.fillStyle = "#fff6d0"; ctx.beginPath();
+    ctx.moveTo(0, -sz * 1.3); ctx.lineTo(sz * 0.8, 0); ctx.lineTo(0, sz * 1.3); ctx.lineTo(-sz * 0.8, 0); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  // Coin Drops (Gold coin with inner diamond emblem matching LumenRun.jpeg)
+  for (const c of coinDrops) {
+    const bob = Math.sin(tt * 4 + c.ph) * 2.5;
+    glow(c.x, c.y + bob, 26, "255,210,80", 0.48);
+    ctx.save(); ctx.translate(c.x, c.y + bob);
+    ctx.fillStyle = "#ffd95e"; ctx.strokeStyle = "#fff5c0"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, 0, 8.5, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#d9931e";
+    ctx.beginPath(); ctx.moveTo(0, -4.5); ctx.lineTo(3.8, 0); ctx.lineTo(0, 4.5); ctx.lineTo(-3.8, 0); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  // Powerups
+  for (const pw of powerups) {
+    const pulse = 1 + Math.sin(tt * 4 + pw.ph) * 0.14;
+    glow(pw.x, pw.y, 38, pw.rgb, 0.55);
+    ctx.save(); ctx.translate(pw.x, pw.y);
+    ctx.strokeStyle = `rgb(${pw.rgb})`; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(0, 0, 12 * pulse, 0, 7); ctx.stroke();
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(0, 0, 5.5, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.globalCompositeOperation = "source-over";
+
+  // Shadows (Stalkers, Darters, and Horned Eclipse Wardens matching LumenRun.jpeg)
+  for (const s of shadows) {
+    const ang = Math.atan2(s.vy, s.vx), wob = Math.sin(tt * 4 + s.ph);
+    const rim = s.type === "boss" ? "255,70,95" : s.type === "darter" ? "255,85,120" : "155,105,255";
+    glow(s.x, s.y, s.r * 2.7, rim, 0.25);
+    ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(ang);
+
+    // Curved Horns (Prominent on Boss Warden, spiky ears on Stalkers/Darters)
+    ctx.fillStyle = "#080518";
+    ctx.strokeStyle = `rgba(${rim},.85)`;
+    ctx.lineWidth = s.type === "boss" ? 2.5 : 1.5;
+    const hLen = s.type === "boss" ? s.r * 1.45 : s.r * 0.95;
+    for (const dir of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(s.r * 0.1, dir * s.r * 0.65);
+      ctx.quadraticCurveTo(s.r * 0.55, dir * hLen * 1.15, -s.r * 0.25, dir * hLen);
+      ctx.quadraticCurveTo(-s.r * 0.15, dir * s.r * 0.75, -s.r * 0.2, dir * s.r * 0.55);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    // Shadow Body
+    ctx.beginPath(); ctx.ellipse(0, 0, s.r * (1.1 + wob * 0.06), s.r * (0.92 - wob * 0.05), 0, 0, 7);
+    ctx.fillStyle = "#050310"; ctx.fill();
+    ctx.lineWidth = s.type === "boss" ? 3 : 2;
+    ctx.strokeStyle = `rgba(${rim},.85)`; ctx.stroke();
+
+    // Boss Crimson Rune Markings
+    if (s.type === "boss") {
+      ctx.strokeStyle = "rgba(255, 65, 90, 0.85)";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(-s.r * 0.45, 0); ctx.lineTo(s.r * 0.05, 0);
+      ctx.moveTo(-s.r * 0.2, -s.r * 0.45); ctx.lineTo(0, 0); ctx.lineTo(-s.r * 0.2, s.r * 0.45);
+      ctx.stroke();
+    }
+
+    // Shadow Smoke Tendrils
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath(); ctx.moveTo(-s.r * 0.6, (k - 1) * s.r * 0.45);
+      ctx.quadraticCurveTo(-s.r * 1.6, (k - 1) * s.r * 0.8 + Math.sin(tt * 5 + k + s.ph) * 6, -s.r * 2.2, (k - 1) * s.r * 0.6 + Math.sin(tt * 4 + k) * 8);
+      ctx.strokeStyle = `rgba(${rim},.48)`; ctx.lineWidth = 3 - k * 0.4; ctx.stroke();
+    }
+
+    // Glowing Eyes & Jagged Grin
+    const eyeCol = s.type === "boss" || s.type === "darter" ? "#ff4d6d" : "#c77dff";
+    ctx.fillStyle = eyeCol;
+    ctx.shadowColor = eyeCol; ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(s.r * 0.36, -s.r * 0.28, s.type === "boss" ? 4.2 : 2.8, 0, 7);
+    ctx.arc(s.r * 0.36, s.r * 0.28, s.type === "boss" ? 4.2 : 2.8, 0, 7);
+    ctx.fill();
+
+    // Glowing Fanged Smile
+    ctx.strokeStyle = eyeCol;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(s.r * 0.48, 0, s.r * 0.26, -0.85, 0.85);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // Particles, Rings, Floating Texts
+  ctx.globalCompositeOperation = "lighter";
+  for (const q of parts) { const a = q.life / q.max; ctx.fillStyle = `rgba(${q.color},${a * 0.9})`; ctx.beginPath(); ctx.arc(q.x, q.y, q.size * a + 0.4, 0, 7); ctx.fill(); }
+  for (const r of rings) {
+    const k = 1 - r.life / r.max, rad = r.big ? 20 + k * getBurstRadius() : r.r + k * 46;
+    ctx.strokeStyle = `rgba(${r.color},${(1 - k) * (r.big ? 0.8 : 0.9)})`; ctx.lineWidth = r.big ? 5 : 2.5;
+    ctx.beginPath(); ctx.arc(r.x, r.y, rad, 0, 7); ctx.stroke();
+  }
+  ctx.globalCompositeOperation = "source-over";
+  ctx.font = "bold 17px 'Trebuchet MS', system-ui, sans-serif"; ctx.textAlign = "center";
+  for (const x of texts) { ctx.fillStyle = `rgba(255,236,170,${x.life / x.max})`; ctx.fillText(x.str, x.x, x.y); }
+
+  // Player Solar Orb (Blazing golden core + cyan-blue plasma rim matching LumenRun.jpeg)
+  if (state === "play" || state === "ad") {
+    ctx.globalCompositeOperation = "lighter";
+    glow(p.x, p.y, 44, "92,225,255", dashActiveT > 0 ? 0.65 : 0.28);
+    glow(p.x, p.y, 34, ORB.hi, 0.78);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + Math.sin(tt * 6) * 0.8, 0, 7);
+    ctx.fillStyle = ORB.core; ctx.shadowColor = ORB.hex; ctx.shadowBlur = 24; ctx.fill(); ctx.shadowBlur = 0;
+  }
+
+  // Shield / Invulnerability Ring
+  if (invuln > 0 && state === "play") {
+    ctx.globalCompositeOperation = "lighter";
+    ctx.strokeStyle = `rgba(92,225,255,${0.4 + 0.25 * Math.sin(tt * 14)})`; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 13 + Math.sin(tt * 8) * 2, 0, 7); ctx.stroke();
+    ctx.globalCompositeOperation = "source-over";
+  }
+
+  // Magnet Active Ring
+  if (magnetBuffT > 0 && state === "play") {
+    ctx.strokeStyle = `rgba(185,130,255,${0.25 + 0.15 * Math.sin(tt * 8)})`; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 24 + (tt * 35) % 28, 0, 7); ctx.stroke();
+  }
+
+  // Shard Finder Compass Arrow & Target Ring (helps players easily find the nearest Shard)
+  if (state === "play" && shards.length > 0) {
+    let near = shards[0], bestD = Infinity;
+    for (const s of shards) {
+      const d = Math.hypot(s.x - p.x, s.y - p.y);
+      if (d < bestD) { bestD = d; near = s; }
+    }
+    const showGuide = tutActive || light < maxL * 0.55 || bestD > 160;
+    if (showGuide && bestD > 42) {
+      const ang = Math.atan2(near.y - p.y, near.x - p.x);
+      const dist = p.r + 24 + Math.sin(tt * 6) * 3;
+      const ax = p.x + Math.cos(ang) * dist, ay = p.y + Math.sin(ang) * dist;
+      ctx.save();
+      ctx.translate(ax, ay);
+      ctx.rotate(ang);
+      ctx.fillStyle = "rgba(255, 217, 120, 0.88)";
+      ctx.shadowColor = "#ffd978";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(8, 0);
+      ctx.lineTo(-5, -5.5);
+      ctx.lineTo(-2.5, 0);
+      ctx.lineTo(-5, 5.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      if (tutActive) {
+        ctx.strokeStyle = `rgba(255, 217, 120, ${0.45 + 0.35 * Math.sin(tt * 7)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(near.x, near.y, 20 + Math.sin(tt * 6) * 4, 0, 7);
+        ctx.stroke();
+
+        if (tutPhase === 0) {
+          ctx.save();
+          ctx.setLineDash([6, 6]);
+          ctx.strokeStyle = "rgba(255, 217, 120, 0.35)";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(near.x, near.y);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.font = "600 13px 'Trebuchet MS', system-ui, sans-serif";
+          ctx.fillStyle = "rgba(255, 236, 170, 0.92)";
+          ctx.textAlign = "center";
+          ctx.fillText("Move: Mouse / Touch Drag or WASD / Arrows", p.x, Math.min(H - 28, p.y + p.r + 36));
+        }
+      }
+    }
+  }
+
+  // Vignette
+  const v = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.8);
+  v.addColorStop(0, "rgba(4,3,14,0)"); v.addColorStop(1, "rgba(4,3,14,.7)");
+  ctx.fillStyle = v; ctx.fillRect(-20, -20, W + 40, H + 40);
+  if (flash > 0 && !settings.noflash) { ctx.fillStyle = `rgba(255,236,190,${flash})`; ctx.fillRect(-20, -20, W + 40, H + 40); }
+  ctx.restore();
+
+  // HUD Sync
+  $("time").textContent = t.toFixed(1) + "s";
+  $("meterFill").style.width = Math.max(0, Math.min(100, (light - MIN_LIGHT) / (maxL - MIN_LIGHT) * 100)) + "%";
+  $("shards").textContent = "Shards " + collected;
+  $("coins").textContent = "Coins " + coins;
+  $("pauseBtn").style.display = state === "play" ? "block" : "none";
+  $("fps").style.display = settings.fps ? "block" : "none";
+  $("best").textContent = "Best " + best.toFixed(1) + "s";
+
+  const cHud = $("comboHud");
+  if (state === "play" && combo > 1) {
+    cHud.style.display = "flex";
+    cHud.textContent = `Combo ×${combo}`;
+  } else {
+    cHud.style.display = "none";
+  }
+
+  const dBtn = $("dashHudBtn");
+  if (state === "play") {
+    dBtn.style.display = "flex";
+    if (dashCd > 0) {
+      dBtn.classList.add("cd");
+      $("dashLbl").textContent = dashCd.toFixed(1) + "s";
+    } else {
+      dBtn.classList.remove("cd");
+      $("dashLbl").textContent = "DASH";
+    }
+  } else {
+    dBtn.style.display = "none";
+  }
+}
+
+let last = performance.now(), fpsAcc = 0, fpsN = 0;
+function loop(now) {
+  const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now;
+  fpsAcc += raw; fpsN++; if (fpsAcc >= 0.5) { if (settings.fps) $("fps").textContent = Math.round(fpsN / fpsAcc) + " fps"; fpsAcc = 0; fpsN = 0; }
+  if (state === "play") update(dt);
+  else if (state === "over" || state === "revive") {
+    if (state === "revive") {
+      reviveT -= dt; $("noBtn").textContent = `No thanks (${Math.max(0, Math.ceil(reviveT))})`;
+      if (reviveT <= 0) declineRevive();
+    }
+    for (const q of parts) { q.life -= dt; q.x += q.vx * dt; q.y += q.vy * dt; }
+    parts = parts.filter(q => q.life > 0);
+    for (const x of texts) { x.life -= dt; x.y -= 28 * dt; }
+    texts = texts.filter(x => x.life > 0);
+    shake = Math.max(0, shake - dt * 30);
+  }
+  draw(now);
+  requestAnimationFrame(loop);
+}
+
+/* ============================================================================
+   9. Cloud Profile, Missions & Progression
+   ============================================================================ */
+let stats = {
+  games: 0, bestShards: 0, bestCombo: 1, totalShards: 0, totalTime: 0,
+  daily: "", streak: 0, tutDone: false, introSeen: false,
+  up: defaultUpgrades(), owned: defaultOwned(), eq: defaultEq(), missions: [],
+};
+let user = null;
+
+function ensureMissions() {
+  if (!Array.isArray(stats.missions)) stats.missions = [];
+  while (stats.missions.length < 3) {
+    const usedTypes = stats.missions.map(m => m.txt);
+    const avail = MISSION_POOL.filter(m => !usedTypes.includes(m.txt));
+    const pick = avail[Math.floor(Math.random() * avail.length)] || MISSION_POOL[0];
+    stats.missions.push({ type: pick.type, target: pick.target, prog: 0, reward: pick.reward, txt: pick.txt });
+  }
+}
+
+function progressMission(type, val, isMax = false) {
+  let changed = false;
+  for (const m of stats.missions) {
+    if (m.type === type && m.prog < m.target) {
+      m.prog = isMax ? Math.max(m.prog, Math.min(m.target, val)) : Math.min(m.target, m.prog + val);
+      changed = true;
+    }
+  }
+  if (changed) saveProfile();
+}
+
+function renderMissions() {
+  ensureMissions();
+  const box = $("missionList");
+  box.textContent = "";
+  for (let i = 0; i < stats.missions.length; i++) {
+    const m = stats.missions[i];
+    const done = m.prog >= m.target;
+    const row = document.createElement("div");
+    row.className = "m-row";
+
+    const info = document.createElement("div");
+    info.className = "m-info";
+    const title = document.createElement("div");
+    title.textContent = `${m.txt} (${m.prog}/${m.target})`;
+    const bar = document.createElement("div");
+    bar.className = "m-bar";
+    const fill = document.createElement("i");
+    fill.style.width = Math.min(100, (m.prog / m.target) * 100) + "%";
+    bar.appendChild(fill);
+    info.append(title, bar);
+
+    const btn = document.createElement("button");
+    btn.className = "m-btn" + (done ? " done" : "");
+    if (done) {
+      btn.textContent = `Claim +${m.reward}`;
+      btn.onclick = () => {
+        coins += m.reward;
+        stats.missions.splice(i, 1);
+        ensureMissions();
+        saveProfile();
+        audioInit();
+        burstSound();
+        portal.happytime();
+        refreshLobby();
+      };
+    } else {
+      btn.textContent = `+${m.reward} 🪙`;
+      btn.disabled = true;
+    }
+    row.append(info, btn);
+    box.appendChild(row);
+  }
+}
+
+function mergeProgress(a, b) {
+  const owned = defaultOwned();
+  for (const cat of Object.keys(owned)) {
+    const s = new Set([...(a.owned && a.owned[cat] ? a.owned[cat] : []), ...(b.owned && b.owned[cat] ? b.owned[cat] : []), ...owned[cat]]);
+    owned[cat] = Array.from(s);
+  }
+  const up = defaultUpgrades();
+  for (const k of Object.keys(up)) {
+    up[k] = Math.max((a.up && a.up[k]) || 0, (b.up && b.up[k]) || 0);
+  }
+  return {
+    coins: Math.max(a.coins || 0, b.coins || 0),
+    best: Math.max(a.best || 0, b.best || 0),
+    games: Math.max(a.games || 0, b.games || 0),
+    bestShards: Math.max(a.bestShards || 0, b.bestShards || 0),
+    bestCombo: Math.max(a.bestCombo || 1, b.bestCombo || 1),
+    totalShards: Math.max(a.totalShards || 0, b.totalShards || 0),
+    totalTime: Math.max(a.totalTime || 0, b.totalTime || 0),
+    daily: (a.daily || "") > (b.daily || "") ? a.daily : (b.daily || ""),
+    streak: Math.max(a.streak || 0, b.streak || 0),
+    up,
+    owned,
+    eq: Object.assign(defaultEq(), a.eq, b.eq),
+    missions: (a.missions && a.missions.length) ? a.missions : (b.missions || []),
+    introSeen: !!(a.introSeen || b.introSeen),
+    tutDone: !!(a.tutDone || b.tutDone),
+  };
+}
+
+function loadProfile() {
+  const guestData = portal.dataGet("sh_guest", {});
+  const userData = user ? (portal.dataGet("sh_users", {})[user.key] || {}) : {};
+  const d = user ? mergeProgress(guestData, userData) : guestData;
+  coins = d.coins || 0;
+  best = d.best || 0;
+  stats = {
+    games: d.games || 0,
+    bestShards: d.bestShards || 0,
+    bestCombo: d.bestCombo || 1,
+    totalShards: d.totalShards || 0,
+    totalTime: d.totalTime || 0,
+    daily: d.daily || "",
+    streak: d.streak || 0,
+    up: Object.assign(defaultUpgrades(), d.up),
+    owned: Object.assign(defaultOwned(), d.owned),
+    eq: Object.assign(defaultEq(), d.eq),
+    missions: Array.isArray(d.missions) ? d.missions : [],
+    introSeen: !!d.introSeen,
+    tutDone: !!d.tutDone,
+  };
+  ensureMissions();
+}
+
+function saveProfile() {
+  const payload = Object.assign({ coins, best }, stats);
+  portal.dataSet("sh_guest", payload);
+  if (user) {
+    const users = portal.dataGet("sh_users", {});
+    users[user.key] = Object.assign({ name: user.name }, payload);
+    portal.dataSet("sh_users", users);
+  }
+}
+
+function paintAvatar(el, name, avatarUrl) {
+  let hue = 0; for (const ch of name) hue = (hue * 31 + ch.charCodeAt(0)) % 360;
+  if (avatarUrl) {
+    el.textContent = "";
+    el.style.backgroundImage = `url(${avatarUrl})`;
+    el.style.backgroundColor = `hsl(${hue},75%,70%)`;
+  } else {
+    el.style.backgroundImage = "none";
+    el.textContent = name[0].toUpperCase();
+    el.style.backgroundColor = `hsl(${hue},75%,70%)`;
+  }
+  el.style.boxShadow = `0 0 22px hsl(${hue},75%,60%), inset 0 0 14px rgba(255,255,255,.35)`;
+}
+
+function applyPortalUser(pu) {
+  if (!pu || !pu.username) return;
+  saveProfile();
+  user = { key: "portal:" + pu.username, name: pu.username, avatarUrl: pu.profilePictureUrl || "", portal: true };
+  loadProfile();
+  saveProfile();
+  refreshUserUI();
+}
+
+function refreshUserUI() {
+  refreshLobby();
+  if (user) {
+    $("userLine").textContent = `Signed in as ${user.name}`;
+    $("authBtn").textContent = "";
+  } else if (portal.ready && portal.userAccountAvailable) {
+    $("userLine").textContent = "Cloud save available · ";
+    $("authBtn").textContent = "Log in with CrazyGames";
+  } else {
+    $("userLine").textContent = "Progress auto-saved · Space/Tap to Dash";
+    $("authBtn").textContent = "";
+  }
+}
+
+$("authBtn").onclick = async () => {
+  if (user) return;
+  if (portal.ready && portal.userAccountAvailable) {
+    const pu = await portal.authPrompt();
+    if (pu && pu.username) applyPortalUser(pu);
+  }
+};
+
+function fmtTime(sec) { sec = Math.floor(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? `${h}h ${m}m` : m ? `${m}m ${sec % 60}s` : `${sec}s`; }
+
+function openProfile() {
+  const name = user ? user.name : "Player";
+  paintAvatar($("pAvatar"), name, user && user.avatarUrl);
+  $("pName").textContent = name;
+  $("pBadge").textContent = user ? "CrazyGames Cloud Account" : "Cloud / Local Auto-Save";
+  const ri = getRankIndex(best);
+  $("pRank").textContent = "Rank: " + RANKS[ri][0];
+  if (ri < RANKS.length - 1) {
+    const lo = RANKS[ri][1], hi = RANKS[ri + 1][1];
+    $("pBar").style.width = Math.min(100, (best - lo) / (hi - lo) * 100) + "%";
+    $("pNext").textContent = `Survive ${hi}s to reach ${RANKS[ri + 1][0]} (best: ${best.toFixed(1)}s)`;
+  } else {
+    $("pBar").style.width = "100%";
+    $("pNext").textContent = "Top rank reached!";
+  }
+  $("sCoins").textContent = coins;
+  $("sBest").textContent = best.toFixed(1) + "s";
+  $("sBestShards").textContent = stats.bestShards;
+  $("sBestCombo").textContent = "×" + (stats.bestCombo || 1);
+  $("sGames").textContent = stats.games;
+  $("sTime").textContent = fmtTime(stats.totalTime);
+  const pAuth = $("pAuth");
+  if (!user && portal.ready && portal.userAccountAvailable) {
+    pAuth.style.display = "flex";
+    pAuth.textContent = "Log in with CrazyGames";
+  } else {
+    pAuth.style.display = "none";
+  }
+  $("profile").classList.remove("hidden");
+  $("pClose").focus();
+}
+function closeProfile() { $("profile").classList.add("hidden"); }
+$("profileBtn").onclick = openProfile;
+$("pClose").onclick = closeProfile;
+$("pAuth").onclick = async () => {
+  const pu = await portal.authPrompt();
+  if (pu && pu.username) { applyPortalUser(pu); openProfile(); }
+};
+
+/* ---------- Visual Game Intro & How-to-Play Guide ---------- */
+const INTRO_SLIDES = [
+  {
+    tag: "Welcome to LumenRun · 1/3",
+    title: "Keep Your Light Alive!",
+    cards: [
+      { ico: "✨", title: "Collect Glowing Shards", desc: "Your light shrinks over time. Follow the golden arrow around your orb to collect diamond Shards, refill your light, and chain up to a ×5 Combo!" },
+      { ico: "💥", title: "Every 5 Shards = Nova Shockwave", desc: "Collecting 5 Shards unleashes a massive shockwave that blasts nearby shadows away and damages Boss Wardens." },
+      { ico: "👻", title: "Beware of the Shadows", desc: "Stalkers, Crimson Darters, and Boss Wardens hunt you from the dark. They move slower inside your light circle!" },
+    ],
+  },
+  {
+    tag: "Controls & Skills · 2/3",
+    title: "Move & Phase Dash",
+    cards: [
+      { ico: "🕹️", title: "Easy Controls (Desktop & Mobile)", desc: "Steer with your Mouse, <span class='kbd'>WASD</span> / <span class='kbd'>Arrow Keys</span>, or drag anywhere on touchscreen." },
+      { ico: "⚡", title: "Phase Dash (Invulnerable Burst)", desc: "Press <span class='kbd'>SPACE</span> / <span class='kbd'>SHIFT</span>, double-tap the screen, or tap the on-screen <b>DASH</b> button to phase right through shadows!" },
+      { ico: "🧭", title: "Golden Shard Compass", desc: "A golden pointer arrow orbits your character to always show you the direction of the nearest Light Shard." },
+    ],
+  },
+  {
+    tag: "Power-Ups & Upgrades · 3/3",
+    title: "Power Up & Unlock",
+    cards: [
+      { ico: "🛡️", title: "Arena Power-Up Orbs", desc: "Grab <b>Cyan Shields</b> (vaporize shadows for coins!), <b>Violet Magnets</b> (pull all shards & coins), and <b>Gold Solar Flares</b> (freeze shadows)." },
+      { ico: "⬆️", title: "Permanent Power Upgrades", desc: "Spend your 🪙 Coins in <b>Upgrades & Shop</b> to permanently level up your Light Capacity, Speed, Magnet Range, Shockwave, and Coin Greed!" },
+      { ico: "🎯", title: "Complete Missions & Ranks", desc: "Finish active lobby missions for bonus coins and survive longer to climb from <b>Spark</b> to <b>Sun</b> rank!" },
+    ],
+  },
+];
+let introIdx = 0, introFrom = "menu";
+
+function renderIntro() {
+  const s = INTRO_SLIDES[introIdx];
+  $("introTag").textContent = s.tag;
+  $("introTitle").textContent = s.title;
+  const body = $("introBody");
+  body.innerHTML = "";
+  for (const c of s.cards) {
+    const row = document.createElement("div");
+    row.className = "intro-card";
+    row.innerHTML = `<div class="intro-ico">${c.ico}</div><div><b>${c.title}</b><span>${c.desc}</span></div>`;
+    body.appendChild(row);
+  }
+  const dots = $("introDots");
+  dots.textContent = "";
+  INTRO_SLIDES.forEach((_, i) => {
+    const d = document.createElement("button");
+    d.className = "dot" + (i === introIdx ? " on" : "");
+    d.setAttribute("aria-label", `Slide ${i + 1}`);
+    d.onclick = () => { introIdx = i; renderIntro(); };
+    dots.appendChild(d);
+  });
+  $("introPrevBtn").textContent = introIdx === 0 ? "Close" : "← Back";
+  $("introNextBtn").textContent = introIdx === INTRO_SLIDES.length - 1 ? "Got It, Let's Play!" : "Next →";
+}
+
+function openIntro(from = "menu") {
+  introFrom = from;
+  introIdx = 0;
+  if (from === "pause") $("pause").classList.add("hidden");
+  renderIntro();
+  $("intro").classList.remove("hidden");
+  $("introNextBtn").focus();
+}
+
+function closeIntro(startNow = false, forceTut = false) {
+  stats.introSeen = true;
+  saveProfile();
+  $("intro").classList.add("hidden");
+  if (startNow) {
+    startRun(forceTut);
+  } else if (introFrom === "pause" && state === "pause") {
+    $("pause").classList.remove("hidden");
+  }
+}
+
+$("howBtn").onclick = () => openIntro("menu");
+$("pHowBtn").onclick = () => openIntro("pause");
+$("introPrevBtn").onclick = () => {
+  if (introIdx > 0) { introIdx--; renderIntro(); }
+  else closeIntro(false, false);
+};
+$("introNextBtn").onclick = () => {
+  if (introIdx < INTRO_SLIDES.length - 1) { introIdx++; renderIntro(); }
+  else closeIntro(introFrom === "menu", false);
+};
+$("introPlayTutBtn").onclick = () => closeIntro(true, true);
+
+async function restoreSession() {
+  loadSettings();
+  loadProfile();
+  const pu = await portal.getUser();
+  if (pu && pu.username) applyPortalUser(pu);
+  else refreshUserUI();
+}
+
+/* ============================================================================
+   10. Lobby, Mode Selector & Daily Streak
+   ============================================================================ */
+const TIPS = [
+  "🌿 Zen Chill mode slows shadow drift and light drain for a deeply relaxing flow state.",
+  "Press SPACE or tap DASH to phase through shadows with brief invulnerability!",
+  "Collect shards quickly to build up to a ×5 Combo for musical harmonic chimes & coins.",
+  "Upgrade your Solar Core and Starlight Magnet in the Shop to expand your sanctuary.",
+  "Every 5 shards triggers a Nova Shockwave that gently clears nearby shadows.",
+];
+const dstr = d => d.toLocaleDateString("en-CA");
+function dailyInfo() {
+  const today = dstr(new Date()), y = new Date(); y.setDate(y.getDate() - 1);
+  const claimed = stats.daily === today, next = claimed ? stats.streak : (stats.daily === dstr(y) ? stats.streak + 1 : 1);
+  return { today, claimed, next, reward: 60 + 30 * (Math.min(next, 7) - 1) };
+}
+function syncLobbyModeBar() {
+  const bar = $("lobbyModeBar");
+  if (!bar) return;
+  bar.querySelectorAll(".mode-btn").forEach(btn => {
+    btn.classList.toggle("on", btn.dataset.diff === settings.diff);
+  });
+}
+$("lobbyModeBar").querySelectorAll(".mode-btn").forEach(btn => {
+  btn.onclick = () => {
+    settings.diff = btn.dataset.diff;
+    saveSettings();
+    audioInit();
+    chime(2);
+    syncLobbyModeBar();
+  };
+});
+
+function refreshLobby() {
+  const name = user ? user.name : "Player";
+  paintAvatar($("lAvatar"), name, user && user.avatarUrl);
+  $("lName").textContent = name;
+  const ri = getRankIndex(best);
+  $("lRank").textContent = "Rank: " + RANKS[ri][0];
+  $("lCoins").textContent = coins + " coins";
+  $("lBest").textContent = "Best " + best.toFixed(1) + "s";
+  syncLobbyModeBar();
+
+  const boostBtn = $("boostBtn");
+  boostBtn.disabled = preRunBoost;
+  $("boostBtnTxt").textContent = preRunBoost ? "2× Boost & Shield Ready!" : "2× Coins & Shield";
+
+  const cBoost = $("coinBoostBtn");
+  cBoost.disabled = coinShieldBoost || preRunBoost || coins < 40;
+  cBoost.textContent = (coinShieldBoost || preRunBoost) ? "Shield Active" : "Shield Start · 40 🪙";
+
+  const d = dailyInfo(), b = $("dailyBtn");
+  b.disabled = d.claimed;
+  b.textContent = d.claimed ? `Claimed (${stats.streak}d)` : `Daily +${d.reward} 🪙`;
+
+  renderMissions();
+  $("tip").textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+}
+
+$("dailyBtn").onclick = () => {
+  const d = dailyInfo(); if (d.claimed) return;
+  stats.daily = d.today; stats.streak = d.next; coins += d.reward; saveProfile();
+  audioInit(); burstSound(); refreshLobby();
+};
+
+function showLobby() {
+  portal.gameplayStop();
+  tutActive = false;
+  $("tutBanner").style.display = "none";
+  reset(); state = "menu";
+  ["over", "pause", "revive", "shop", "intro"].forEach(id => $(id).classList.add("hidden"));
+  $("menu").classList.remove("hidden");
+  refreshLobby();
+  portal.showBanner();
+}
+$("lobbyBtn").onclick = showLobby;
+
+/* ============================================================================
+   11. Shop (Upgrades Tab + Cosmetics Tabs)
+   ============================================================================ */
+let shopTab = "up";
+const TAB_LABELS = { up: "⚡ Upgrades", orb: "Orbs", trail: "Trails", world: "Worlds" };
+
+function unlockHint() {
+  for (const u of UPGRADES) {
+    if (upLv(u.id) < u.max) {
+      const c = upCost(u);
+      return coins >= c
+        ? `Ready to upgrade ${u.name} in the Shop!`
+        : `${c - coins} more coins to upgrade ${u.name}`;
+    }
+  }
+  return "All power upgrades maxed! Check out new skins in the Shop.";
+}
+
+function swatch(cat, it) {
+  if (cat === "world") return `linear-gradient(160deg, ${it.bg[0]}, ${it.bg[1]} 55%, ${it.bg[2]})`;
+  if (it.rainbow) return "conic-gradient(#ff6b6b,#ffd93d,#6bff95,#4dd2ff,#b57bff,#ff6b6b)";
+  return `radial-gradient(circle at 35% 30%, rgb(${it.hi || it.rgb}), rgb(${it.rgb}))`;
+}
+
+function buyUpgrade(u, viaAd = false) {
+  const lv = upLv(u.id);
+  if (lv >= u.max) return;
+  const cost = upCost(u);
+  if (!viaAd) {
+    if (coins < cost) {
+      $("shopMsg").className = "err";
+      $("shopMsg").textContent = `Need ${cost - coins} more coins for ${u.name}. Watch an ad for free coins or instant upgrade!`;
+      return;
+    }
+    coins -= cost;
+  }
+  stats.up[u.id] = lv + 1;
+  saveProfile();
+  audioInit();
+  burstSound();
+  if (stats.up[u.id] === u.max) portal.happytime();
+  refreshLobby();
+  $("shopMsg").className = "err ok";
+  $("shopMsg").textContent = `${u.name} upgraded to Lv.${stats.up[u.id]}!`;
+  renderShop();
+}
+
+function buyItem(cat, it) {
+  if (coins < it.price) {
+    $("shopMsg").className = "err";
+    $("shopMsg").textContent = `Need ${it.price - coins} more coins for ${it.name}.`;
+    return;
+  }
+  coins -= it.price;
+  unlockAndEquip(cat, it);
+}
+
+function unlockAndEquip(cat, it) {
+  if (!stats.owned[cat].includes(it.id)) stats.owned[cat].push(it.id);
+  stats.eq[cat] = it.id;
+  saveProfile();
+  audioInit();
+  burstSound();
+  portal.happytime();
+  refreshLobby();
+  $("shopMsg").className = "err ok";
+  $("shopMsg").textContent = `${it.name} unlocked and equipped!`;
+  renderShop();
+}
+
+function renderShop() {
+  $("shopCoins").textContent = `Coins: ${coins} 🪙`;
+  const tabs = $("shopTabs");
+  tabs.textContent = "";
+  for (const c of Object.keys(TAB_LABELS)) {
+    const b = document.createElement("button");
+    b.className = "tab" + (c === shopTab ? " on" : "");
+    b.textContent = TAB_LABELS[c];
+    b.onclick = () => { shopTab = c; $("shopMsg").textContent = ""; renderShop(); };
+    tabs.appendChild(b);
+  }
+
+  const upBox = $("shopUpgrades"), grid = $("shopGrid");
+  if (shopTab === "up") {
+    upBox.style.display = "flex";
+    grid.style.display = "none";
+    upBox.textContent = "";
+    for (const u of UPGRADES) {
+      const lv = upLv(u.id), maxed = lv >= u.max, cost = upCost(u);
+      const card = document.createElement("div");
+      card.className = "up-card";
+
+      const ico = document.createElement("div");
+      ico.className = "up-ico";
+      ico.textContent = u.ico;
+
+      const body = document.createElement("div");
+      body.className = "up-body";
+      const title = document.createElement("b");
+      title.textContent = `${u.name} · Lv.${lv}/${u.max}`;
+      const desc = document.createElement("small");
+      desc.textContent = u.desc;
+      const pips = document.createElement("div");
+      pips.className = "up-pips";
+      for (let i = 0; i < u.max; i++) {
+        const pip = document.createElement("span");
+        pip.className = "up-pip" + (i < lv ? " on" : "");
+        pips.appendChild(pip);
+      }
+      body.append(title, desc, pips);
+
+      const acts = document.createElement("div");
+      acts.className = "up-acts";
+      const btn = document.createElement("button");
+      if (maxed) {
+        btn.textContent = "MAXED";
+        btn.disabled = true;
+        acts.appendChild(btn);
+      } else {
+        btn.textContent = `${cost} 🪙`;
+        btn.onclick = () => buyUpgrade(u, false);
+        acts.appendChild(btn);
+
+        const adBtn = document.createElement("button");
+        adBtn.className = "ad-up";
+        adBtn.textContent = "Ad · Free Lv+1";
+        adBtn.onclick = () => {
+          portal.showRewardedAd({ onReward: () => buyUpgrade(u, true) });
+        };
+        acts.appendChild(adBtn);
+      }
+
+      card.append(ico, body, acts);
+      upBox.appendChild(card);
+    }
+  } else {
+    upBox.style.display = "none";
+    grid.style.display = "grid";
+    grid.textContent = "";
+    for (const it of COSMETICS[shopTab]) {
+      const owned = stats.owned[shopTab].includes(it.id), eq = stats.eq[shopTab] === it.id;
+      const card = document.createElement("div"); card.className = "item" + (eq ? " eq" : "");
+      const sw = document.createElement("div"); sw.className = "swatch" + (shopTab === "world" ? " sq" : ""); sw.style.background = swatch(shopTab, it);
+      const nm = document.createElement("b"); nm.textContent = it.name;
+      const btn = document.createElement("button");
+      if (eq) {
+        btn.textContent = "Equipped"; btn.disabled = true; btn.className = "alt";
+        card.append(sw, nm, btn);
+      } else if (owned) {
+        btn.textContent = "Equip"; btn.className = "alt";
+        btn.onclick = () => { stats.eq[shopTab] = it.id; saveProfile(); $("shopMsg").textContent = ""; renderShop(); };
+        card.append(sw, nm, btn);
+      } else {
+        btn.textContent = `Buy · ${it.price} 🪙`;
+        btn.onclick = () => buyItem(shopTab, it);
+        card.append(sw, nm, btn);
+        if (it.price <= 120) {
+          const adBtn = document.createElement("button");
+          adBtn.className = "ad-unlock";
+          adBtn.textContent = "Ad · Unlock Free";
+          adBtn.onclick = () => {
+            portal.showRewardedAd({ onReward: () => unlockAndEquip(shopTab, it) });
+          };
+          card.appendChild(adBtn);
+        }
+      }
+      grid.appendChild(card);
+    }
+  }
+}
+
+function openShop(tab) {
+  if (typeof tab === "string") shopTab = tab;
+  $("shopMsg").textContent = "";
+  renderShop();
+  $("shop").classList.remove("hidden");
+  $("shopDone").focus();
+}
+function closeShop() {
+  $("shop").classList.add("hidden");
+  if (state === "over") updateOverUI(false);
+}
+$("shopBtn").onclick = () => openShop("up");
+$("shopDone").onclick = closeShop;
+
+/* ============================================================================
+   12. Pause, Focus & Settings
+   ============================================================================ */
+function pauseGame() {
+  if (state !== "play") return;
+  state = "pause";
+  portal.gameplayStop();
+  $("pause").classList.remove("hidden");
+  $("resumeBtn").focus();
+}
+function resumeGame() {
+  if (state !== "pause") return;
+  $("pause").classList.add("hidden");
+  state = "play";
+  portal.gameplayStart();
+}
+$("pauseBtn").onclick = pauseGame;
+$("resumeBtn").onclick = resumeGame;
+$("quitBtn").onclick = showLobby;
+
+addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    if (!$("settings").classList.contains("hidden")) { closeSettings(); return; }
+    if (!$("intro").classList.contains("hidden")) { closeIntro(false, false); return; }
+    if (!$("shop").classList.contains("hidden")) { closeShop(); return; }
+    if (!$("profile").classList.contains("hidden")) { closeProfile(); return; }
+  }
+  if (e.key === "Escape" || e.key.toLowerCase() === "p") {
+    if (
+      $("settings").classList.contains("hidden") &&
+      $("intro").classList.contains("hidden") &&
+      $("shop").classList.contains("hidden") &&
+      $("profile").classList.contains("hidden")
+    ) {
+      if (state === "play") pauseGame();
+      else if (state === "pause") resumeGame();
+    }
+  }
+});
+document.addEventListener("visibilitychange", () => {
+  tabHidden = document.hidden;
+  syncAudioGain();
+  if (document.hidden) pauseGame();
+});
+addEventListener("blur", pauseGame);
+addEventListener("focus", () => {
+  tabHidden = document.hidden;
+  syncAudioGain();
+});
+
+const SET_ROWS = [
+  { k: "sound", label: "Sound effects", type: "toggle" },
+  { k: "music", label: "Ambient Zen music", type: "toggle", note: "Soothing harmonic soundscape" },
+  { k: "volume", label: "Volume", type: "range" },
+  { k: "diff", label: "Pacing & Mode", type: "seg", note: "Zen Chill: slower drift & light drain", opts: [["chill", "Zen Chill"], ["normal", "Classic"], ["hard", "Intense"]] },
+  { k: "fx", label: "Effects quality", type: "seg", note: "Use Low on older devices", opts: [["low", "Low"], ["normal", "Normal"], ["high", "High"]] },
+  { k: "shake", label: "Screen shake", type: "toggle" },
+  { k: "noflash", label: "Reduce flashing", type: "toggle" },
+  { k: "fps", label: "Show FPS", type: "toggle" },
+];
+let settingsFrom = "menu";
+function renderSettings() {
+  const box = $("setList"); box.textContent = "";
+  for (const r of SET_ROWS) {
+    const row = document.createElement("div"); row.className = "srow";
+    const lab = document.createElement("label"); lab.textContent = r.label;
+    if (r.note) { const sm = document.createElement("small"); sm.textContent = r.note; lab.appendChild(sm); }
+    row.appendChild(lab);
+    if (r.type === "range") {
+      const inp = document.createElement("input");
+      inp.type = "range"; inp.min = 0; inp.max = 1; inp.step = 0.05; inp.value = settings[r.k]; inp.setAttribute("aria-label", r.label);
+      inp.oninput = () => { settings[r.k] = +inp.value; saveSettings(); syncAudioGain(); };
+      inp.onchange = () => { audioInit(); chime(2); };
+      row.appendChild(inp);
+    } else {
+      const seg = document.createElement("div"); seg.className = "seg";
+      for (const [val, txt] of (r.type === "toggle" ? [[true, "On"], [false, "Off"]] : r.opts)) {
+        const b = document.createElement("button"), on = settings[r.k] === val;
+        b.textContent = txt; b.className = on ? "on" : ""; b.setAttribute("aria-pressed", on);
+        b.onclick = () => {
+          settings[r.k] = val; saveSettings();
+          syncAudioGain();
+          syncLobbyModeBar();
+          if (r.k === "fx") resize();
+          if ((r.k === "sound" || r.k === "music") && val) { audioInit(); chime(2); }
+          renderSettings();
+        };
+        seg.appendChild(b);
+      }
+      row.appendChild(seg);
+    }
+    box.appendChild(row);
+  }
+}
+function openSettings() {
+  settingsFrom = state === "pause" ? "pause" : "menu"; $("pause").classList.add("hidden");
+  renderSettings(); $("settings").classList.remove("hidden"); $("sDone").focus();
+}
+function closeSettings() {
+  $("settings").classList.add("hidden");
+  if (settingsFrom === "pause" && state === "pause") $("pause").classList.remove("hidden");
+}
+$("settingsBtn").onclick = openSettings;
+$("pSettingsBtn").onclick = openSettings;
+$("sDone").onclick = closeSettings;
+
+let resetArmed = 0;
+$("resetBtn").onclick = () => {
+  const b = $("resetBtn");
+  if (!resetArmed) {
+    resetArmed = setTimeout(() => { resetArmed = 0; b.textContent = "Reset progress"; }, 3000);
+    b.textContent = "Tap again to erase coins, upgrades & unlocks";
+    return;
+  }
+  clearTimeout(resetArmed); resetArmed = 0; b.textContent = "Reset progress";
+  coins = 0; best = 0;
+  stats = { games: 0, bestShards: 0, bestCombo: 1, totalShards: 0, totalTime: 0, daily: "", streak: 0, tutDone: false, introSeen: false, up: defaultUpgrades(), owned: defaultOwned(), eq: defaultEq(), missions: [] };
+  ensureMissions();
+  saveProfile();
+  refreshLobby();
+};
+
+reset();
+requestAnimationFrame(loop);
+
+async function bootGame() {
+  const fill = $("loaderFill"), status = $("loaderStatus"), loader = $("loader");
+  const setProg = (pct, msg) => {
+    if (fill) fill.style.width = pct + "%";
+    if (status && msg) status.textContent = msg;
+  };
+  const preloadHero = new Promise(resolve => {
+    const img = new Image();
+    const timer = setTimeout(resolve, 600);
+    img.onload = img.onerror = () => { clearTimeout(timer); resolve(); };
+    img.src = "LumenRun.jpeg";
+  });
+  setProg(35, "Connecting to CrazyGames...");
+  await Promise.all([portal.init(), preloadHero]);
+  setProg(75, "Restoring starlight sanctuary...");
+  await restoreSession();
+  setProg(100, "Entering the light...");
+  portal.loadingStop();
+
+  setTimeout(() => {
+    if (loader) loader.classList.add("done");
+    // First-time players transition from loading screen directly into peaceful guided gameplay
+    if (!stats.tutDone && stats.games === 0) {
+      startRun(true);
+    } else {
+      showLobby();
+    }
+  }, 420);
+}
+bootGame();
+</script>
+</body>
+</html>
