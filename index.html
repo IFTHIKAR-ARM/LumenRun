@@ -362,7 +362,7 @@
     100% { transform: scale(1.045); }
   }
   .loader-orb-wrap {
-    position: absolute; width: 92px; height: 92px;
+    position: absolute; width: 58px; height: 58px;
     display: flex; align-items: center; justify-content: center; pointer-events: none;
   }
   .loader-ring {
@@ -372,7 +372,7 @@
   }
   .loader-ring.r2 { inset: -14px; border-color: rgba(92, 225, 255, .32); animation-delay: .8s; }
   .loader-orb {
-    width: 36px; height: 36px; border-radius: 50%;
+    width: 22px; height: 22px; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ffffff, #ffe39a 55%, #ffb84d 100%);
     box-shadow: 0 0 32px #ffd978, 0 0 64px rgba(92, 225, 255, .55);
     animation: breatheOrb 2.2s ease-in-out infinite;
@@ -895,9 +895,9 @@ const D = () => DIFF[settings.diff] || DIFF.chill;
 
 /* Permanent Gameplay Upgrades (Coin Sink + Ad Upgrade Option) */
 const UPGRADES = [
-  { id: "light",  ico: "☀️", name: "Solar Core",       desc: "+18 Max Light radius & slower light drain", base: 60,  mult: 1.65, max: 5 },
+  { id: "light",  ico: "☀️", name: "Solar Core",       desc: "+12 Max Light radius & slower light drain", base: 60,  mult: 1.65, max: 5 },
   { id: "speed",  ico: "⚡", name: "Swift Wings",      desc: "+8% Movement speed & faster Dash recharge", base: 70,  mult: 1.65, max: 5 },
-  { id: "magnet", ico: "🧲", name: "Starlight Magnet", desc: "+42px Pull range for shards, coins & orbs", base: 80,  mult: 1.7,  max: 5 },
+  { id: "magnet", ico: "🧲", name: "Starlight Magnet", desc: "+38px Pull range for shards, coins & orbs", base: 80,  mult: 1.7,  max: 5 },
   { id: "burst",  ico: "💥", name: "Nova Shockwave",   desc: "+45px Light Burst radius & longer stun",   base: 90,  mult: 1.7,  max: 5 },
   { id: "greed",  ico: "🪙", name: "Midas Glow",       desc: "+15% Bonus coins from runs & coin pickups", base: 100, mult: 1.75, max: 5 },
 ];
@@ -1075,12 +1075,12 @@ function resize() {
 }
 addEventListener("resize", resize); resize();
 
-const BASE_MAX_LIGHT = 240, MIN_LIGHT = 62;
-const getMaxLight = () => BASE_MAX_LIGHT + upLv("light") * 18;
-const getLightDrain = () => 8.5 * (D().drain || 1) * Math.pow(0.92, upLv("light"));
+const BASE_MAX_LIGHT = 145, MIN_LIGHT = 44;
+const getMaxLight = () => BASE_MAX_LIGHT + upLv("light") * 12;
+const getLightDrain = () => 6.2 * (D().drain || 1) * Math.pow(0.92, upLv("light"));
 const getMoveSpeed = () => 235 * (1 + upLv("speed") * 0.08);
-const getMagnetRange = () => 34 + upLv("magnet") * 42 + (magnetBuffT > 0 ? 280 : 0);
-const getBurstRadius = () => 400 + upLv("burst") * 45;
+const getMagnetRange = () => 85 + upLv("magnet") * 38 + (magnetBuffT > 0 ? 260 : 0);
+const getBurstRadius = () => 290 + upLv("burst") * 35;
 const getGreedMult = () => 1 + upLv("greed") * 0.15;
 
 let state = "menu", p, shadows, shards, coinDrops, powerups, parts, rings, texts;
@@ -1094,7 +1094,7 @@ let tutActive = false, tutPhase = 0; // 0=collect shard, 1=use dash, 2=trigger b
 const keys = {}, target = { x: 0, y: 0, active: false };
 
 function reset() {
-  p = { x: W / 2, y: H / 2, r: 11, dirX: 0, dirY: -1 };
+  p = { x: W / 2, y: H / 2, r: 8.5, dirX: 0, dirY: -1 };
   shadows = []; shards = []; coinDrops = []; powerups = []; parts = []; rings = []; texts = [];
   t = 0; collected = 0; runCoinPickups = 0;
   light = getMaxLight();
@@ -1598,7 +1598,7 @@ function update(dt) {
       comboT = 4.2;
       maxRunCombo = Math.max(maxRunCombo, combo);
 
-      light = Math.min(maxL, light + 48 + combo * 5);
+      light = Math.min(maxL, light + 32 + combo * 4);
       chime((collected - 1) % 8);
       burst(s.x, s.y, 18, "255,236,170", 160);
       rings.push({ x: s.x, y: s.y, r: 8, life: 0.5, max: 0.5, color: "255,217,120" });
@@ -1743,7 +1743,7 @@ function draw(now) {
   if (state !== "over" || parts.length) {
     glow(p.x, p.y, L, flareBuffT > 0 ? "255,230,120" : ORB.rgb, 0.30);
     glow(p.x, p.y, L * 0.45, ORB.hi, 0.22);
-    ctx.strokeStyle = `rgba(${ORB.rgb},.22)`; ctx.lineWidth = 1.5;
+    ctx.strokeStyle = `rgba(${ORB.rgb},.16)`; ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.arc(p.x, p.y, L * (0.98 + Math.sin(tt * 2) * 0.02), 0, 7); ctx.stroke();
   }
 
@@ -1861,8 +1861,8 @@ function draw(now) {
   // Player Solar Orb (Blazing golden core + cyan-blue plasma rim matching LumenRun.jpeg)
   if (state === "play" || state === "ad") {
     ctx.globalCompositeOperation = "lighter";
-    glow(p.x, p.y, 44, "92,225,255", dashActiveT > 0 ? 0.65 : 0.28);
-    glow(p.x, p.y, 34, ORB.hi, 0.78);
+    glow(p.x, p.y, 28, "92,225,255", dashActiveT > 0 ? 0.65 : 0.25);
+    glow(p.x, p.y, 21, ORB.hi, 0.75);
     ctx.globalCompositeOperation = "source-over";
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r + Math.sin(tt * 6) * 0.8, 0, 7);
     ctx.fillStyle = ORB.core; ctx.shadowColor = ORB.hex; ctx.shadowBlur = 24; ctx.fill(); ctx.shadowBlur = 0;
@@ -1872,14 +1872,14 @@ function draw(now) {
   if (invuln > 0 && state === "play") {
     ctx.globalCompositeOperation = "lighter";
     ctx.strokeStyle = `rgba(92,225,255,${0.4 + 0.25 * Math.sin(tt * 14)})`; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 13 + Math.sin(tt * 8) * 2, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 9 + Math.sin(tt * 8) * 1.5, 0, 7); ctx.stroke();
     ctx.globalCompositeOperation = "source-over";
   }
 
   // Magnet Active Ring
   if (magnetBuffT > 0 && state === "play") {
     ctx.strokeStyle = `rgba(185,130,255,${0.25 + 0.15 * Math.sin(tt * 8)})`; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 24 + (tt * 35) % 28, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 16 + (tt * 28) % 20, 0, 7); ctx.stroke();
   }
 
   // Shard Finder Compass Arrow & Target Ring (helps players easily find the nearest Shard)
@@ -1892,7 +1892,7 @@ function draw(now) {
     const showGuide = tutActive || light < maxL * 0.55 || bestD > 160;
     if (showGuide && bestD > 42) {
       const ang = Math.atan2(near.y - p.y, near.x - p.x);
-      const dist = p.r + 24 + Math.sin(tt * 6) * 3;
+      const dist = p.r + 17 + Math.sin(tt * 6) * 2.5;
       const ax = p.x + Math.cos(ang) * dist, ay = p.y + Math.sin(ang) * dist;
       ctx.save();
       ctx.translate(ax, ay);
