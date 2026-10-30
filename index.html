@@ -932,6 +932,86 @@
       color: var(--gold);
     }
 
+    .badge.local-ok {
+      background: rgba(77, 240, 168, .12);
+      border-color: rgba(77, 240, 168, .38);
+      color: #9effd4;
+    }
+
+    .profile-setup-box {
+      margin: 6px 0 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .045);
+      border: 1px solid rgba(255, 255, 255, .10);
+      text-align: left;
+    }
+
+    .setup-lbl {
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      color: #dfc888;
+      letter-spacing: .06em;
+      margin-bottom: 5px;
+    }
+
+    .setup-name-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .setup-name-row input {
+      flex: 1;
+      height: 36px;
+      padding: 0 10px;
+      border-radius: 10px;
+      background: rgba(12, 8, 30, .85);
+      border: 1px solid rgba(255, 217, 120, .32);
+      color: #fff3c9;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      outline: none;
+    }
+
+    .setup-name-row input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(255, 217, 120, .4);
+    }
+
+    .setup-name-row button {
+      height: 36px;
+      padding: 0 14px;
+      font-size: 13px !important;
+      min-width: 65px;
+    }
+
+    .avatar-palette {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      padding-top: 4px;
+    }
+
+    .c-dot {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, .25);
+      cursor: pointer;
+      transition: transform .14s, border-color .14s, box-shadow .14s;
+    }
+
+    .c-dot:hover,
+    .c-dot.on {
+      transform: scale(1.2);
+      border-color: #fff;
+      box-shadow: 0 0 12px currentColor;
+    }
+
     .rank {
       margin: 6px 0 4px;
       font-size: 16.5px;
@@ -1608,7 +1688,7 @@
           onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='LumenRun2.jpeg'}else if(this.dataset.fb==1){this.dataset.fb=2;this.src='LumenRun3.jpeg'}else{this.parentElement.style.display='none'}" />
         <button class="help-pill" id="howBtn" title="How to Play &amp; Guide">❓ Guide</button>
       </div>
-      <div class="card">
+      <div class="card" id="lobbyCard" role="button" tabindex="0" title="Tap to customize Player Name &amp; Profile" style="cursor:pointer">
         <div class="avatar sm" id="lAvatar">?</div>
         <div class="who"><b id="lName">Player</b><span id="lRank">Rank: Spark</span></div>
         <div class="chips"><span id="lCoins">0 coins</span><small id="lBest">Best 0.0s</small></div>
@@ -1686,12 +1766,26 @@
     </div>
   </div>
 
-  <!-- Profile Overlay -->
+  <!-- Profile & User Setup Overlay -->
   <div id="profile" class="overlay hidden">
     <div class="panel">
       <div class="avatar" id="pAvatar">?</div>
-      <h2 id="pName" style="font-size:24px">Player</h2>
-      <span class="badge" id="pBadge">Cloud Auto-Save</span>
+      <div class="profile-setup-box">
+        <label for="pNameInput" class="setup-lbl">PLAYER NICKNAME &amp; AVATAR</label>
+        <div class="setup-name-row">
+          <input type="text" id="pNameInput" maxlength="14" placeholder="Enter nickname..." />
+          <button class="b sm primary" id="saveNameBtn">Save</button>
+        </div>
+        <div class="avatar-palette" id="avatarPalette">
+          <button class="c-dot" data-hue="45" title="Gold" style="background:#ffd978;color:#ffd978"></button>
+          <button class="c-dot" data-hue="195" title="Sky" style="background:#5ce1ff;color:#5ce1ff"></button>
+          <button class="c-dot" data-hue="270" title="Violet" style="background:#b088ff;color:#b088ff"></button>
+          <button class="c-dot" data-hue="145" title="Emerald" style="background:#4df0a8;color:#4df0a8"></button>
+          <button class="c-dot" data-hue="335" title="Rose" style="background:#ff6b8b;color:#ff6b8b"></button>
+          <button class="c-dot" data-hue="20" title="Flame" style="background:#ff934d;color:#ff934d"></button>
+        </div>
+      </div>
+      <span class="badge local-ok" id="pBadge">Local Auto-Save: Active ✅</span>
       <div class="rank" id="pRank">Spark</div>
       <div class="bar"><i id="pBar" style="width:0%"></i></div>
       <p class="next" id="pNext"></p>
@@ -1704,7 +1798,7 @@
         <div class="cell"><b id="sTime">0m</b><span>Total survived</span></div>
       </div>
       <button class="b reward" id="pAuth">Log in with CrazyGames</button>
-      <button class="b primary" id="pClose">Close</button>
+      <button class="b primary" id="pClose">Done</button>
     </div>
   </div>
 
@@ -1866,24 +1960,39 @@
       },
 
       dataGet(key, fallback) {
+        // Safe localStorage lookup first or fallback
+        let localVal = null;
         try {
-          if (this.ready && window.CrazyGames.SDK.data) {
-            const v = window.CrazyGames.SDK.data.getItem(key);
-            if (v !== null && v !== undefined) return JSON.parse(v);
-          }
           const lv = localStorage.getItem(key);
-          return lv ? JSON.parse(lv) : fallback;
-        } catch (e) { return fallback; }
+          if (lv && typeof lv === "string" && lv.trim().length > 1) {
+            localVal = JSON.parse(lv);
+          }
+        } catch (e) { }
+
+        // CrazyGames cloud storage lookup
+        try {
+          if (this.ready && window.CrazyGames && window.CrazyGames.SDK && window.CrazyGames.SDK.data) {
+            const v = window.CrazyGames.SDK.data.getItem(key);
+            if (v && typeof v === "string" && v.trim().length > 1) {
+              const parsed = JSON.parse(v);
+              if (parsed) return parsed;
+            }
+          }
+        } catch (e) { }
+
+        if (localVal !== null && localVal !== undefined) return localVal;
+        return fallback;
       },
 
       dataSet(key, val) {
-        const raw = JSON.stringify(val);
+        let raw = "";
+        try { raw = JSON.stringify(val); } catch (e) { return; }
+        try { localStorage.setItem(key, raw); } catch (e) { }
         try {
-          if (this.ready && window.CrazyGames.SDK.data) {
+          if (this.ready && window.CrazyGames && window.CrazyGames.SDK && window.CrazyGames.SDK.data) {
             window.CrazyGames.SDK.data.setItem(key, raw);
           }
         } catch (e) { }
-        try { localStorage.setItem(key, raw); } catch (e) { }
       },
 
       showMidgameAd(onDone) {
@@ -2024,11 +2133,11 @@
     const D = () => DIFF[settings.diff] || DIFF.chill;
 
     const UPGRADES = [
-      { id: "light", ico: "☀️", name: "Solar Core", desc: "+12 Max Light radius & slower light drain", base: 40, mult: 1.50, max: 5 },
-      { id: "speed", ico: "⚡", name: "Swift Wings", desc: "+8% Movement speed & faster Dash recharge", base: 45, mult: 1.50, max: 5 },
-      { id: "magnet", ico: "🧲", name: "Starlight Magnet", desc: "+14px Magnet orb pull range & +1.0s duration", base: 50, mult: 1.52, max: 5 },
-      { id: "burst", ico: "💥", name: "Nova Shockwave", desc: "+45px Light Burst radius & longer stun", base: 55, mult: 1.52, max: 5 },
-      { id: "greed", ico: "🪙", name: "Midas Glow", desc: "+15% Bonus coins from runs & coin pickups", base: 60, mult: 1.55, max: 5 },
+      { id: "light", ico: "☀️", name: "Solar Core", desc: "+12 Max Light radius & slower light drain", base: 100, mult: 1.655, max: 5 },
+      { id: "speed", ico: "⚡", name: "Swift Wings", desc: "+8% Movement speed & faster Dash recharge", base: 100, mult: 1.655, max: 5 },
+      { id: "magnet", ico: "🧲", name: "Starlight Magnet", desc: "+14px Magnet orb pull range & +1.0s duration", base: 105, mult: 1.635, max: 5 },
+      { id: "burst", ico: "💥", name: "Nova Shockwave", desc: "+45px Light Burst radius & longer stun", base: 110, mult: 1.616, max: 5 },
+      { id: "greed", ico: "🪙", name: "Midas Glow", desc: "+15% Bonus coins from runs & coin pickups", base: 115, mult: 1.598, max: 5 },
     ];
     const defaultUpgrades = () => ({ light: 0, speed: 0, magnet: 0, burst: 0, greed: 0 });
     function upLv(id) { return (typeof stats !== "undefined" && stats && stats.up && stats.up[id]) || 0; }
@@ -2048,20 +2157,20 @@
     const COSMETICS = {
       orb: [
         { id: "gold", name: "Sunlight", price: 0, rgb: "255,200,110", hi: "255,226,160", core: "#fffbe6", hex: "#ffd978" },
-        { id: "sky", name: "Sky", price: 250, rgb: "110,190,255", hi: "170,220,255", core: "#f0f8ff", hex: "#8fd0ff" },
-        { id: "mint", name: "Mint", price: 250, rgb: "100,235,170", hi: "170,250,210", core: "#f0fff7", hex: "#7df0b5" },
-        { id: "rose", name: "Rose", price: 450, rgb: "255,130,170", hi: "255,190,210", core: "#fff0f5", hex: "#ff9fc0" },
-        { id: "violet", name: "Violet", price: 650, rgb: "170,130,255", hi: "205,180,255", core: "#f6f0ff", hex: "#b79cff" },
-        { id: "ember", name: "Ember", price: 800, rgb: "255,120,60", hi: "255,170,110", core: "#fff3ea", hex: "#ff8a4a" },
-        { id: "prism", name: "Prism", price: 1000, rainbow: true },
+        { id: "sky", name: "Sky", price: 100, rgb: "110,190,255", hi: "170,220,255", core: "#f0f8ff", hex: "#8fd0ff" },
+        { id: "mint", name: "Mint", price: 180, rgb: "100,235,170", hi: "170,250,210", core: "#f0fff7", hex: "#7df0b5" },
+        { id: "rose", name: "Rose", price: 300, rgb: "255,130,170", hi: "255,190,210", core: "#fff0f5", hex: "#ff9fc0" },
+        { id: "violet", name: "Violet", price: 450, rgb: "170,130,255", hi: "205,180,255", core: "#f6f0ff", hex: "#b79cff" },
+        { id: "ember", name: "Ember", price: 600, rgb: "255,120,60", hi: "255,170,110", core: "#fff3ea", hex: "#ff8a4a" },
+        { id: "prism", name: "Prism", price: 750, rainbow: true },
       ],
       trail: [
         { id: "gold", name: "Sparkle", price: 0, rgb: "255,217,120" },
-        { id: "firefly", name: "Fireflies", price: 200, rgb: "170,255,120" },
-        { id: "petal", name: "Petals", price: 350, rgb: "255,150,190" },
-        { id: "frost", name: "Frost", price: 350, rgb: "150,230,255" },
-        { id: "embers", name: "Embers", price: 600, rgb: "255,140,70" },
-        { id: "prism", name: "Prism", price: 850, rainbow: true },
+        { id: "firefly", name: "Fireflies", price: 100, rgb: "170,255,120" },
+        { id: "petal", name: "Petals", price: 220, rgb: "255,150,190" },
+        { id: "frost", name: "Frost", price: 360, rgb: "150,230,255" },
+        { id: "embers", name: "Embers", price: 520, rgb: "255,140,70" },
+        { id: "prism", name: "Prism", price: 750, rainbow: true },
       ],
       world: [
         { id: "midnight", name: "Midnight", price: 0, bg: ["#0d0a2a", "#120d33", "#1b0f3a"], fog: ["70,40,150", "30,60,130"], mote: "255,230,160" },
@@ -3430,6 +3539,8 @@
        9. Cloud Profile, Missions & Progression
        ============================================================================ */
     let stats = {
+      playerName: "Player",
+      avatarHue: 45,
       games: 0, bestShards: 0, bestCombo: 1, totalShards: 0, totalTime: 0,
       daily: "", streak: 0, tutDone: false, introSeen: false,
       up: defaultUpgrades(), owned: defaultOwned(), eq: defaultEq(), missions: [],
@@ -3512,6 +3623,8 @@
         up[k] = Math.max((a.up && a.up[k]) || 0, (b.up && b.up[k]) || 0);
       }
       return {
+        playerName: (b.playerName && b.playerName !== "Player") ? b.playerName : (a.playerName || "Player"),
+        avatarHue: typeof b.avatarHue === "number" ? b.avatarHue : (typeof a.avatarHue === "number" ? a.avatarHue : 45),
         coins: Math.max(a.coins || 0, b.coins || 0),
         best: Math.max(a.best || 0, b.best || 0),
         games: Math.max(a.games || 0, b.games || 0),
@@ -3531,12 +3644,14 @@
     }
 
     function loadProfile() {
-      const guestData = portal.dataGet("sh_guest", {});
+      const guestData = portal.dataGet("lr_profile", null) || portal.dataGet("sh_guest", {});
       const userData = user ? (portal.dataGet("sh_users", {})[user.key] || {}) : {};
       const d = user ? mergeProgress(guestData, userData) : guestData;
-      coins = d.coins || 0;
-      best = d.best || 0;
+      coins = typeof d.coins === "number" ? d.coins : (coins || 0);
+      best = typeof d.best === "number" ? d.best : (best || 0);
       stats = {
+        playerName: (d.playerName && typeof d.playerName === "string") ? d.playerName.trim().slice(0, 14) : (stats.playerName || "Player"),
+        avatarHue: (typeof d.avatarHue === "number") ? d.avatarHue : 45,
         games: d.games || 0,
         bestShards: d.bestShards || 0,
         bestCombo: d.bestCombo || 1,
@@ -3556,6 +3671,7 @@
 
     function saveProfile() {
       const payload = Object.assign({ coins, best }, stats);
+      portal.dataSet("lr_profile", payload);
       portal.dataSet("sh_guest", payload);
       if (user) {
         const users = portal.dataGet("sh_users", {});
@@ -3564,15 +3680,18 @@
       }
     }
 
-    function paintAvatar(el, name, avatarUrl) {
-      let hue = 0; for (const ch of name) hue = (hue * 31 + ch.charCodeAt(0)) % 360;
+    function paintAvatar(el, name, avatarUrl, customHue) {
+      let hue = (typeof customHue === "number") ? customHue : 45;
+      if (customHue === undefined && name) {
+        hue = 0; for (const ch of name) hue = (hue * 31 + ch.charCodeAt(0)) % 360;
+      }
       if (avatarUrl) {
         el.textContent = "";
         el.style.backgroundImage = `url(${avatarUrl})`;
         el.style.backgroundColor = `hsl(${hue},75%,70%)`;
       } else {
         el.style.backgroundImage = "none";
-        el.textContent = name[0].toUpperCase();
+        el.textContent = (name && name[0]) ? name[0].toUpperCase() : "P";
         el.style.backgroundColor = `hsl(${hue},75%,70%)`;
       }
       el.style.boxShadow = `0 0 22px hsl(${hue},75%,60%), inset 0 0 14px rgba(255,255,255,.35)`;
@@ -3587,35 +3706,79 @@
       refreshUserUI();
     }
 
-    function refreshUserUI() {
-      refreshLobby();
-      if (user) {
-        $("userLine").textContent = `Signed in as ${user.name}`;
-        $("authBtn").textContent = "";
-      } else if (portal.ready && portal.userAccountAvailable) {
-        $("userLine").textContent = "Cloud save available · ";
-        $("authBtn").textContent = "Log in with CrazyGames";
-      } else {
-        $("userLine").textContent = isTouchDevice() ? "Progress auto-saved · Joystick / Tap Dash" : "Progress auto-saved · Space/Tap to Dash";
-        $("authBtn").textContent = "";
+    function logoutUser() {
+      if (!user) return;
+      saveProfile();
+      user = null;
+      loadProfile();
+      saveProfile();
+      refreshUserUI();
+      audioInit();
+      chime(1);
+      if (!$("profile").classList.contains("hidden")) {
+        openProfile();
       }
     }
 
-    $("authBtn").onclick = async () => {
-      if (user) return;
+    async function handleAuthAction() {
+      if (user) {
+        logoutUser();
+        return;
+      }
       if (portal.ready && portal.userAccountAvailable) {
         const pu = await portal.authPrompt();
-        if (pu && pu.username) applyPortalUser(pu);
+        if (pu && pu.username) {
+          applyPortalUser(pu);
+          if (!$("profile").classList.contains("hidden")) openProfile();
+        }
+      } else {
+        openProfile();
       }
-    };
+    }
+
+    function refreshUserUI() {
+      refreshLobby();
+      if (user) {
+        $("userLine").textContent = `Signed in as ${user.name} · `;
+        $("authBtn").textContent = "Log out";
+        $("authBtn").style.display = "inline";
+      } else if (portal.ready && portal.userAccountAvailable) {
+        $("userLine").textContent = `Guest (${stats.playerName || "Player"}) · `;
+        $("authBtn").textContent = "Log in with CrazyGames";
+        $("authBtn").style.display = "inline";
+      } else {
+        $("userLine").textContent = `Playing as ${stats.playerName || "Player"} · `;
+        $("authBtn").textContent = "Edit Profile";
+        $("authBtn").style.display = "inline";
+      }
+    }
+
+    $("authBtn").onclick = handleAuthAction;
 
     function fmtTime(sec) { sec = Math.floor(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? `${h}h ${m}m` : m ? `${m}m ${sec % 60}s` : `${sec}s`; }
 
     function openProfile() {
-      const name = user ? user.name : "Player";
-      paintAvatar($("pAvatar"), name, user && user.avatarUrl);
-      $("pName").textContent = name;
-      $("pBadge").textContent = user ? "CrazyGames Cloud Account" : "Cloud / Local Auto-Save";
+      const name = user ? user.name : (stats.playerName || "Player");
+      paintAvatar($("pAvatar"), name, user && user.avatarUrl, stats.avatarHue);
+      const nameInput = $("pNameInput");
+      const saveBtn = $("saveNameBtn");
+      if (nameInput) {
+        nameInput.value = name;
+        nameInput.disabled = !!user;
+        nameInput.title = user ? "Connected to CrazyGames account" : "Edit your local player nickname";
+      }
+      if (saveBtn) {
+        saveBtn.disabled = !!user;
+        saveBtn.textContent = user ? "Linked" : "Save";
+      }
+      const palette = $("avatarPalette");
+      if (palette) {
+        palette.querySelectorAll(".c-dot").forEach(dot => {
+          dot.classList.toggle("on", Number(dot.dataset.hue) === (stats.avatarHue || 45));
+        });
+      }
+      $("pBadge").textContent = user ? "CrazyGames Cloud Account ✅" : "Local Auto-Save: Active ✅";
+      $("pBadge").className = "badge local-ok";
       const ri = getRankIndex(best);
       $("pRank").textContent = "Rank: " + RANKS[ri][0];
       if (ri < RANKS.length - 1) {
@@ -3633,9 +3796,14 @@
       $("sGames").textContent = stats.games;
       $("sTime").textContent = fmtTime(stats.totalTime);
       const pAuth = $("pAuth");
-      if (!user && portal.ready && portal.userAccountAvailable) {
+      if (user) {
         pAuth.style.display = "flex";
-        pAuth.textContent = "Log in with CrazyGames";
+        pAuth.className = "b ghost";
+        pAuth.textContent = `🚪 Log Out (${user.name})`;
+      } else if (portal.ready && portal.userAccountAvailable) {
+        pAuth.style.display = "flex";
+        pAuth.className = "b reward";
+        pAuth.textContent = "✨ Log in with CrazyGames";
       } else {
         pAuth.style.display = "none";
       }
@@ -3649,10 +3817,43 @@
     }
     $("profileBtn").onclick = openProfile;
     $("pClose").onclick = closeProfile;
-    $("pAuth").onclick = async () => {
-      const pu = await portal.authPrompt();
-      if (pu && pu.username) { applyPortalUser(pu); openProfile(); }
+    $("pAuth").onclick = handleAuthAction;
+
+    $("saveNameBtn").onclick = () => {
+      const inp = $("pNameInput");
+      if (!inp) return;
+      const val = inp.value.trim().slice(0, 14);
+      if (val) {
+        stats.playerName = val;
+        saveProfile();
+        paintAvatar($("pAvatar"), val, user && user.avatarUrl, stats.avatarHue);
+        refreshLobby();
+        audioInit();
+        chime(3);
+      }
     };
+    $("pNameInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") $("saveNameBtn").click();
+    });
+    $("avatarPalette").querySelectorAll(".c-dot").forEach(dot => {
+      dot.onclick = () => {
+        const hue = Number(dot.dataset.hue) || 45;
+        stats.avatarHue = hue;
+        saveProfile();
+        $("avatarPalette").querySelectorAll(".c-dot").forEach(d => d.classList.toggle("on", d === dot));
+        paintAvatar($("pAvatar"), stats.playerName || "Player", user && user.avatarUrl, stats.avatarHue);
+        paintAvatar($("lAvatar"), stats.playerName || "Player", user && user.avatarUrl, stats.avatarHue);
+        audioInit();
+        chime(2);
+      };
+    });
+    const lobbyCardEl = $("lobbyCard");
+    if (lobbyCardEl) {
+      lobbyCardEl.onclick = openProfile;
+      lobbyCardEl.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProfile(); }
+      });
+    }
 
     /* ---------- Visual Game Intro & How-to-Play Guide ---------- */
     const INTRO_SLIDES = [
@@ -3788,8 +3989,8 @@
     });
 
     function refreshLobby() {
-      const name = user ? user.name : "Player";
-      paintAvatar($("lAvatar"), name, user && user.avatarUrl);
+      const name = user ? user.name : (stats.playerName || "Player");
+      paintAvatar($("lAvatar"), name, user && user.avatarUrl, stats.avatarHue);
       $("lName").textContent = name;
       const ri = getRankIndex(best);
       $("lRank").textContent = "Rank: " + RANKS[ri][0];
@@ -4044,9 +4245,28 @@
       joyZone.style.display = "block";
       portal.gameplayStart();
     }
+    function bankInRunProgress() {
+      if (t > 1.5) {
+        const baseCoins = Math.floor(t * 0.75) + collected * 3 + runCoinPickups + (maxRunCombo > 1 ? maxRunCombo * 2 : 0);
+        const earned = Math.max(1, Math.round(baseCoins * D().coin * getGreedMult() * runCoinMult));
+        coins += earned;
+        stats.games++;
+        stats.totalShards += collected;
+        stats.totalTime += t;
+        if (t > best) best = t;
+        stats.bestShards = Math.max(stats.bestShards, collected);
+        stats.bestCombo = Math.max(stats.bestCombo || 1, maxRunCombo);
+        t = 0; collected = 0; runCoinPickups = 0;
+      }
+      saveProfile();
+    }
+
     $("pauseBtn").onclick = pauseGame;
     $("resumeBtn").onclick = resumeGame;
-    $("quitBtn").onclick = showLobby;
+    $("quitBtn").onclick = () => {
+      bankInRunProgress();
+      showLobby();
+    };
 
     addEventListener("keydown", e => {
       if (e.key === "Escape") {
@@ -4070,8 +4290,13 @@
     document.addEventListener("visibilitychange", () => {
       tabHidden = document.hidden;
       syncAudioGain();
-      if (document.hidden) pauseGame();
+      if (document.hidden) {
+        pauseGame();
+        bankInRunProgress();
+      }
     });
+    window.addEventListener("beforeunload", () => { bankInRunProgress(); });
+    window.addEventListener("pagehide", () => { bankInRunProgress(); });
     addEventListener("blur", pauseGame);
     addEventListener("focus", () => {
       tabHidden = document.hidden;
@@ -4148,8 +4373,9 @@
         return;
       }
       clearTimeout(resetArmed); resetArmed = 0; b.textContent = "Reset progress";
+      const prevName = stats.playerName || "Player", prevHue = stats.avatarHue || 45;
       coins = 0; best = 0;
-      stats = { games: 0, bestShards: 0, bestCombo: 1, totalShards: 0, totalTime: 0, daily: "", streak: 0, tutDone: false, introSeen: false, up: defaultUpgrades(), owned: defaultOwned(), eq: defaultEq(), missions: [] };
+      stats = { playerName: prevName, avatarHue: prevHue, games: 0, bestShards: 0, bestCombo: 1, totalShards: 0, totalTime: 0, daily: "", streak: 0, tutDone: false, introSeen: false, up: defaultUpgrades(), owned: defaultOwned(), eq: defaultEq(), missions: [] };
       ensureMissions();
       saveProfile();
       refreshLobby();
