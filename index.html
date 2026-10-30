@@ -21,7 +21,7 @@
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "Lumen Drift",
-  "image": "LumenRun.jpeg",
+  "image": "Lumendrift.jpeg",
   "genre": ["Casual", "Arcade", "Relaxing", "Avoid", "Skill", "Survival"],
   "gamePlatform": ["Web Browser", "Desktop", "Mobile"],
   "applicationCategory": "Game",
@@ -1295,7 +1295,22 @@
       overflow: hidden;
     }
 
-    /* Clean dark starlight backdrop (removed blurry stretched #loader::before image) */
+    #loader::before {
+      content: "";
+      position: absolute;
+      inset: -30px;
+      background: url("Lumendrift.jpeg") center/cover no-repeat;
+      filter: blur(34px) brightness(0.25) saturate(1.15);
+      opacity: 0.72;
+      transform: scale(1.08);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #loader > * {
+      position: relative;
+      z-index: 2;
+    }
 
     #loader.done {
       opacity: 0;
@@ -1528,8 +1543,8 @@
         <div class="loader-ring r2"></div>
         <div class="loader-orb"></div>
       </div>
-      <img src="LumenRun.jpeg" alt="LumenRun Hero Artwork"
-        onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='../LumenRun.jpeg'}else if(this.dataset.fb==1){this.dataset.fb=2;this.src='../../LumenRun.jpeg'}else if(this.dataset.fb==2){this.dataset.fb=3;this.src='LumenRun/LumenRun.jpeg'}else{this.style.display='none'}" />
+      <img src="Lumendrift.jpeg" alt="Lumen Drift Hero Artwork"
+        onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='LumenRun2.jpeg'}else if(this.dataset.fb==1){this.dataset.fb=2;this.src='LumenRun3.jpeg'}else{this.style.display='none'}" />
     </div>
     <h1 style="margin-bottom:2px">Lumen Drift</h1>
     <div class="loader-sub">Breathe · Drift · Keep the Light Alive</div>
@@ -1589,8 +1604,8 @@
   <div id="menu" class="overlay hidden">
     <div class="panel">
       <div class="lobby-hero">
-        <img src="LumenRun.jpeg" alt="LumenRun"
-          onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='../LumenRun.jpeg'}else if(this.dataset.fb==1){this.dataset.fb=2;this.src='../../LumenRun.jpeg'}else if(this.dataset.fb==2){this.dataset.fb=3;this.src='LumenRun/LumenRun.jpeg'}else{this.parentElement.style.display='none'}" />
+        <img src="Lumendrift.jpeg" alt="Lumen Drift Cover"
+          onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='LumenRun2.jpeg'}else if(this.dataset.fb==1){this.dataset.fb=2;this.src='LumenRun3.jpeg'}else{this.parentElement.style.display='none'}" />
         <button class="help-pill" id="howBtn" title="How to Play &amp; Guide">❓ Guide</button>
       </div>
       <div class="card">
@@ -4153,7 +4168,7 @@
         const img = new Image();
         const timer = setTimeout(resolve, 600);
         img.onload = img.onerror = () => { clearTimeout(timer); resolve(); };
-        img.src = "LumenRun.jpeg";
+        img.src = "Lumendrift.jpeg";
       });
       setProg(35, "Connecting to CrazyGames...");
       const safeInit = Promise.race([portal.init(), new Promise(r => setTimeout(r, 1200))]);
